@@ -1,0 +1,3 @@
+float32 left_encoder
+float32 right_encoder
+float32 ultrasonic_distance
