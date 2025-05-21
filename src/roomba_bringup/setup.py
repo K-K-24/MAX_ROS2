@@ -23,6 +23,8 @@ setup(
             'sensor_reader = roomba_bringup.sensor_reader:main',
             'imu_node = roomba_bringup.imu_node:main',
             'odometry_node = roomba_bringup.odometry_node:main',
+            'motor_driver = roomba_bringup.motor_driver:main',
+        'test_motors = roomba_bringup.test_motor_control:main',  # Add this line
         ],
     },
 )
