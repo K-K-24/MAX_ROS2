@@ -20,6 +20,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'sensor_reader = roomba_bringup.sensor_reader:main',
+            'imu_node = roomba_bringup.imu_node:main',
+            'odometry_node = roomba_bringup.odometry_node:main',
         ],
     },
 )
