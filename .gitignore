@@ -1,0 +1,6 @@
+*.bag
+*.swp
+*.env
+build/
+install/
+log/
