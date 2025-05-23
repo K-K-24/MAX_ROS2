@@ -47,12 +47,5 @@ def generate_launch_description():
             output='screen',
         ),
         
-        # Optional test motor node - only included if specified in launch argument
-        Node(
-            package='roomba_bringup',
-            executable='test_motors',
-            name='test_motors_node',
-            output='screen',
-            condition=IfCondition(include_test_motors)
-        ),
+
     ])
