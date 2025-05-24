@@ -1,4 +1,6 @@
 from setuptools import find_packages, setup
+import os
+from glob import glob
 
 package_name = 'roomba_bringup'
 
@@ -10,6 +12,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+               (os.path.join('share', package_name, 'launch'), glob(os.path.join('launch', '*launch.[pxy][yma]*'))),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -24,7 +27,7 @@ setup(
             'imu_node = roomba_bringup.imu_node:main',
             'odometry_node = roomba_bringup.odometry_node:main',
             'motor_driver = roomba_bringup.motor_driver:main',
-        'test_motors = roomba_bringup.test_motor_control:main',  # Add this line
+        'test_motors = roomba_bringup.test_motor_control:main',  
         ],
     },
 )
