@@ -44,7 +44,7 @@ class MotorDriverNode(Node):
         self.SAFE_DISTANCE = 25.0
         
         # Set up a timer for the obstacle avoidance check
-        self.avoidance_timer = self.create_timer(0.05, self.check_obstacles)
+        self.avoidance_timer = self.create_timer(0.5, self.check_obstacles)
         
         self.get_logger().info('Motor driver node started')
         
