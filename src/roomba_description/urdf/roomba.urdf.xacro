@@ -6,11 +6,11 @@
   <xacro:property name="base_width" value="0.110"/>
   <xacro:property name="base_height" value="0.006"/>
   
-  <!-- Top chassis parameters (adjust these based on your actual robot) -->
-  <xacro:property name="top_length" value="0.193"/>
-  <xacro:property name="top_width" value="0.110"/>
-  <xacro:property name="top_height" value="0.006"/>
-  <xacro:property name="chassis_separation" value="0.04"/>  <!-- Distance between bottom and top chassis -->
+  <!-- Top chassis parameters -->
+  <xacro:property name="top_length" value="0.15"/>
+  <xacro:property name="top_width" value="0.10"/>
+  <xacro:property name="top_height" value="0.02"/>
+  <xacro:property name="chassis_separation" value="0.04"/>
   
   <xacro:property name="wheel_radius" value="0.03"/>
   <xacro:property name="wheel_thickness" value="0.02"/>
@@ -38,6 +38,10 @@
   
   <material name="white">
     <color rgba="1.0 1.0 1.0 1.0"/>
+  </material>
+
+  <material name="yellow">
+    <color rgba="1.0 1.0 0.0 1.0"/>
   </material>
 
   <!-- Base Link (Bottom Chassis - for wheels) -->
@@ -139,6 +143,44 @@
   <xacro:wheel name="rear_left" x="-0.0625" y="0.074" z="0.011"/>
   <xacro:wheel name="rear_right" x="-0.0625" y="-0.074" z="0.011"/>
 
+  <!-- Encoder Macro -->
+  <xacro:macro name="encoder" params="name x y z">
+    <link name="${name}_encoder">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.005" length="0.008"/>
+        </geometry>
+        <material name="yellow"/>
+      </visual>
+      
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.005" length="0.008"/>
+        </geometry>
+      </collision>
+      
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.005"/>
+        <inertia ixx="0.000001" ixy="0.0" ixz="0.0"
+                 iyy="0.000001" iyz="0.0"
+                 izz="0.000001"/>
+      </inertial>
+    </link>
+
+    <joint name="${name}_encoder_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="${name}_encoder"/>
+      <origin xyz="${x} ${y} ${z}" rpy="0 0 0"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- Create Encoders (attached to base_link) -->
+  <xacro:encoder name="front_left" x="0.0825" y="0.028" z="0.011"/>
+  <xacro:encoder name="back_right" x="-0.0825" y="-0.028" z="0.011"/>
+
   <!-- IMU Link (mounted on top chassis) -->
   <link name="imu_link">
     <visual>
@@ -168,7 +210,6 @@
   <joint name="imu_joint" type="fixed">
     <parent link="top_chassis"/>
     <child link="imu_link"/>
-    <!-- Adjust these coordinates relative to top_chassis -->
     <origin xyz="0.05 0.01 ${top_height/2 + 0.005}" rpy="0 0 0"/>
   </joint>
 
@@ -201,7 +242,6 @@
   <joint name="ultrasonic_joint" type="fixed">
     <parent link="top_chassis"/>
     <child link="ultrasonic_link"/>
-    <!-- Adjust these coordinates relative to top_chassis -->
     <origin xyz="0.06 0.03 ${top_height/2 + 0.01}" rpy="0 0 0"/>
   </joint>
 
@@ -234,7 +274,6 @@
   <joint name="camera_joint" type="fixed">
     <parent link="top_chassis"/>
     <child link="camera_link"/>
-    <!-- Adjust these coordinates relative to top_chassis -->
     <origin xyz="0.05 -0.01 ${top_height/2 + 0.005}" rpy="0 0 0"/>
   </joint>
 
