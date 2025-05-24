@@ -42,6 +42,9 @@ class MotorDriverNode(Node):
         self.moving_backward = False
         self.obstacle_distance = 100.0  # Set to a large value initially
         self.SAFE_DISTANCE = 25.0
+
+        #Avoidance state tracking
+        self.avoiding_obstacle = False
         
         # Set up a timer for the obstacle avoidance check
         self.avoidance_timer = self.create_timer(0.5, self.check_obstacles)
@@ -86,13 +89,29 @@ class MotorDriverNode(Node):
         self.obstacle_distance = msg.ultrasonic_distance
             
     def check_obstacles(self):
+        if ( self.avoiding_obstacle):
+            return
         if self.moving_forward and self.obstacle_distance <= self.SAFE_DISTANCE:
             self.get_logger().info(f'Obstacle detected at {self.obstacle_distance:.2f} cm! Avoiding...')
+            # Set avoidance flag
+            self.avoiding_obstacle = True
+            
+            # Execute avoidance sequence
             self.stop_motors()
             self.move_backward(90)
+            
+            # Create sequential timers
             self.create_timer(0.5, lambda: self.stop_motors())
             self.create_timer(0.7, lambda: self.turn_left(90))
             self.create_timer(1.2, lambda: self.stop_motors())
+            
+            # Clear avoidance flag after maneuver completes
+            self.create_timer(1.5, lambda: self.clear_avoidance_flag())
+
+    def clear_avoidance_flag(self):
+        """Reset avoidance flag to allow normal obstacle detection"""
+        self.avoiding_obstacle = False
+        self.get_logger().info('Obstacle avoidance completed, resuming normal operation')
             
 
         
