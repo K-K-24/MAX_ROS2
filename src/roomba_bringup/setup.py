@@ -27,9 +27,9 @@ setup(
             'imu_node = roomba_bringup.imu_node:main',
             'odometry_node = roomba_bringup.odometry_node:main',
             'motor_driver = roomba_bringup.motor_driver:main',
-        'test_motors = roomba_bringup.test_motor_control:main',  
-        'pid_test = roomba_bringup.pid_test_node:main', 
-        'encoder_validator = roomba_bringup.encoder_val_node:main',
+            'test_motors = roomba_bringup.test_motor_control:main',  
+            'encoder_validator = roomba_bringup.encoder_val_node:main',
+            'motor_personality = roomba_bringup.motor_personality_node:main',
         ],
     },
 )

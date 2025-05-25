@@ -35,8 +35,7 @@ class EncoderValidationNode(Node):
         current_time = time.time()
         self.readings_count += 1
         
-        # Log raw readings every 5th message to avoid spam
-        if self.readings_count % 5 == 0:
+        if self.readings_count % 2 == 0:
             self.get_logger().info(f'📊 Raw encoder readings: Left={msg.left_encoder:.1f} cm, Right={msg.right_encoder:.1f} cm')
         
         # Calculate deltas if we have previous readings
@@ -77,8 +76,11 @@ class EncoderValidationNode(Node):
                     if abs(right_vel_rad_s) > 10:
                         self.get_logger().warn('⚠️  Right velocity seems too high!')
                         
-                    if dt > 0.1:
-                        self.get_logger().warn('⚠️  Large time gap between readings!')
+# To this:
+                    if dt > 0.6:  # 0.5s expected + 0.1s tolerance
+                        self.get_logger().warn(f'⚠️  Large time gap: {dt:.3f}s (expected ~0.5s)')
+                    elif dt < 0.4:  # 0.5s expected - 0.1s tolerance  
+                        self.get_logger().warn(f'⚠️  Too fast: {dt:.3f}s (expected ~0.5s)')
                         
                 self.get_logger().info('-' * 40)
         
@@ -105,10 +107,12 @@ class EncoderValidationNode(Node):
             self.get_logger().info(f'   Update rate: {1/avg_dt:.1f} Hz')
             
             # Data quality checks
-            if avg_dt > 0.06:
-                self.get_logger().warn('⚠️  Update rate slower than expected (should be ~20Hz)')
-            if avg_dt < 0.04:
-                self.get_logger().warn('⚠️  Update rate faster than expected')
+            if avg_dt > 0.6:
+                self.get_logger().warn(f'⚠️  Update rate slower than expected: {1/avg_dt:.1f}Hz (should be ~2Hz)')
+            elif avg_dt < 0.4:
+                self.get_logger().warn(f'⚠️  Update rate faster than expected: {1/avg_dt:.1f}Hz (should be ~2Hz)')
+            else:
+                self.get_logger().info(f'✅ Update rate looks good: {1/avg_dt:.1f}Hz')
 
 def main(args=None):
     rclpy.init(args=args)
