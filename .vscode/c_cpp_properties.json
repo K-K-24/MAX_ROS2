@@ -7,6 +7,10 @@
       },
       "includePath": [
         "/opt/ros/humble/include/**",
+        "/home/krish/ros2_ws/install/roomba_interfaces/include/**",
+        "/home/krish/ros2_ws/install/roomba_hardware/include/**",
+        "/home/krish/ros2_ws/src/roomba_hardware/include/**",
+        "/home/krish/ros2_ws/build/roomba_interfaces/**",
         "/home/krish/ros2_ws/src/my_cpp_package/include/**",
         "/usr/include/**"
       ],

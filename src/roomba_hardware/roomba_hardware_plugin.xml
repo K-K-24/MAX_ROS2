@@ -1,0 +1,7 @@
+<library path="roomba_hardware">
+  <class name="roomba_hardware/RoombaHardwareInterface" type="roomba_hardware::RoombaHardwareInterface" base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Hardware interface for Roomba robot using existing sensor_reader and velocity_controller
+    </description>
+  </class>
+</library>
