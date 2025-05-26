@@ -1,6 +1,6 @@
 controller_manager:
   ros__parameters:
-    update_rate: 4  # Match your sensor frequency
+    update_rate: 10  # Match your sensor frequency
     
     # Controllers to load
     diff_drive_controller:
@@ -26,7 +26,7 @@ diff_drive_controller:
     right_wheel_radius_multiplier: 1.0
     
     # Publishing
-    publish_rate: 4.0  # Match control frequency
+    publish_rate: 10.0  # Match control frequency
     odom_frame_id: odom
     base_frame_id: base_link
     pose_covariance_diagonal : [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]

@@ -11,7 +11,7 @@ class IMUNode(Node):
     def __init__(self):
         super().__init__('imu_node')
         self.orientation_publisher = self.create_publisher(Float32, '/imu', 10)
-        self.timer = self.create_timer(0.5, self.timer_callback)
+        self.timer = self.create_timer(0.1, self.timer_callback)
         
         # Initialize IMU
         i2c = busio.I2C(board.SCL, board.SDA)

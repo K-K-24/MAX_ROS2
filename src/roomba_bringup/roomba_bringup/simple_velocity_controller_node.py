@@ -80,7 +80,7 @@ class SimpleVelocityController(Node):
             SensorData, '/wheel_states', self.sensor_callback, 10)
             
         # Control loop - run at 4Hz (2x sensor rate for responsiveness)
-        self.control_timer = self.create_timer(0.25, self.control_loop)
+        self.control_timer = self.create_timer(0.1, self.control_loop)
         
         # Safety check (keeping your existing logic)
         self.avoidance_timer = self.create_timer(0.5, self.check_obstacles)
@@ -226,15 +226,15 @@ class SimpleVelocityController(Node):
         
         # Calculate actual wheel velocities for monitoring (optional)
         current_time = time.time()
-        if self.last_left_encoder is not None and self.last_encoder_time is not None:
-            dt = current_time - self.last_encoder_time
-            if dt > 0:
-                left_delta = msg.left_encoder - self.last_left_encoder
-                right_delta = msg.right_encoder - self.last_right_encoder
+        # if self.last_left_encoder is not None and self.last_encoder_time is not None:
+        #     dt = current_time - self.last_encoder_time
+        #     if dt > 0:
+        #         left_delta = msg.left_encoder - self.last_left_encoder
+        #         right_delta = msg.right_encoder - self.last_right_encoder
                 
-                # Convert to angular velocities
-                self.actual_left_velocity = (left_delta / 100) / self.wheel_radius / dt  # cm to m
-                self.actual_right_velocity = (right_delta / 100) / self.wheel_radius / dt
+        #         # Convert to angular velocities
+        #         self.actual_left_velocity = (left_delta / 100) / self.wheel_radius / dt  # cm to m
+        #         self.actual_right_velocity = (right_delta / 100) / self.wheel_radius / dt
                 
         self.last_left_encoder = msg.left_encoder
         self.last_right_encoder = msg.right_encoder

@@ -8,7 +8,7 @@ class SensorReaderNode(Node):
     def __init__(self):
         super().__init__('sensor_reader')
         self.publisher = self.create_publisher(SensorData, '/wheel_states', 10)
-        self.timer = self.create_timer(0.5, self.timer_callback)
+        self.timer = self.create_timer(0.1, self.timer_callback)
         
         # Initialize serial connection
         self.ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)
