@@ -76,21 +76,13 @@ class SimpleVelocityController(Node):
         # Subscribers (same as your original)
         self.cmd_vel_sub = self.create_subscription(
             Twist, '/cmd_vel', self.cmd_vel_callback, 10)
-        self.sensor_sub = self.create_subscription(
-            SensorData, '/wheel_states', self.sensor_callback, 10)
             
         # Control loop - run at 4Hz (2x sensor rate for responsiveness)
         self.control_timer = self.create_timer(0.1, self.control_loop)
         
         # Safety check (keeping your existing logic)
-        self.avoidance_timer = self.create_timer(0.5, self.check_obstacles)
+        self.avoidance_timer = self.create_timer(0.1, self.check_obstacles)
         
-        # For velocity feedback (optional enhancement)
-        self.last_left_encoder = None
-        self.last_right_encoder = None
-        self.last_encoder_time = None
-        self.actual_left_velocity = 0.0
-        self.actual_right_velocity = 0.0
         
         self.get_logger().info('🚀 Simple Velocity Controller Started')
         self.get_logger().info(f'📏 Wheel separation: {self.wheel_separation}m')
@@ -220,26 +212,6 @@ class SimpleVelocityController(Node):
             
         self.get_logger().debug(f'⚡ PWM output: L={left_pwm:.1f}%, R={right_pwm:.1f}%')
         
-    def sensor_callback(self, msg):
-        """Process sensor data - obstacle avoidance and velocity feedback"""
-        self.obstacle_distance = msg.ultrasonic_distance
-        
-        # Calculate actual wheel velocities for monitoring (optional)
-        current_time = time.time()
-        # if self.last_left_encoder is not None and self.last_encoder_time is not None:
-        #     dt = current_time - self.last_encoder_time
-        #     if dt > 0:
-        #         left_delta = msg.left_encoder - self.last_left_encoder
-        #         right_delta = msg.right_encoder - self.last_right_encoder
-                
-        #         # Convert to angular velocities
-        #         self.actual_left_velocity = (left_delta / 100) / self.wheel_radius / dt  # cm to m
-        #         self.actual_right_velocity = (right_delta / 100) / self.wheel_radius / dt
-                
-        self.last_left_encoder = msg.left_encoder
-        self.last_right_encoder = msg.right_encoder
-        self.last_encoder_time = current_time
-        
     def check_obstacles(self):
         """Obstacle avoidance (keeping your existing logic)"""
         if self.avoiding_obstacle:
@@ -251,11 +223,7 @@ class SimpleVelocityController(Node):
             # Execute avoidance sequence
             self.stop_motors()
             
-            # Create sequential timers for avoidance maneuver
-            self.create_timer(0.1, lambda: self.move_backward(50))
-            self.create_timer(0.6, lambda: self.stop_motors())
-            self.create_timer(0.8, lambda: self.turn_left(50))
-            self.create_timer(1.3, lambda: self.stop_motors())
+
             self.create_timer(1.5, lambda: self.clear_avoidance_flag())
             
     def clear_avoidance_flag(self):
@@ -264,22 +232,6 @@ class SimpleVelocityController(Node):
         self.get_logger().info('✅ Obstacle avoidance completed')
         
     # Direct motor control methods (for obstacle avoidance)
-    def move_backward(self, speed):
-        GPIO.output(self.IN1, GPIO.HIGH)
-        GPIO.output(self.IN2, GPIO.LOW)
-        GPIO.output(self.IN3, GPIO.LOW)
-        GPIO.output(self.IN4, GPIO.HIGH)
-        self.pwm_right.ChangeDutyCycle(speed)
-        self.pwm_left.ChangeDutyCycle(speed)
-        
-    def turn_left(self, speed):
-        GPIO.output(self.IN1, GPIO.LOW)
-        GPIO.output(self.IN2, GPIO.HIGH)
-        GPIO.output(self.IN3, GPIO.LOW)
-        GPIO.output(self.IN4, GPIO.HIGH)
-        self.pwm_right.ChangeDutyCycle(speed)
-        self.pwm_left.ChangeDutyCycle(speed)
-        
     def stop_motors(self):
         """Stop all motors immediately"""
         self.pwm_right.ChangeDutyCycle(0)
