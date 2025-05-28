@@ -1,0 +1,147 @@
+{
+  "left_motor": [
+    {
+      "pwm": 0,
+      "avg_velocity": 0.0,
+      "max_velocity": 0.0,
+      "min_velocity": 0.0,
+      "sample_count": 6
+    },
+    {
+      "pwm": 30,
+      "avg_velocity": 0.0,
+      "max_velocity": 0.0,
+      "min_velocity": 0.0,
+      "sample_count": 6
+    },
+    {
+      "pwm": 40,
+      "avg_velocity": 1.8850020201761524,
+      "max_velocity": 2.271941394440381,
+      "min_velocity": 1.1216216321880603,
+      "sample_count": 6
+    },
+    {
+      "pwm": 50,
+      "avg_velocity": 3.3901074172082644,
+      "max_velocity": 4.507317571398114,
+      "min_velocity": 2.2489659092401286,
+      "sample_count": 6
+    },
+    {
+      "pwm": 60,
+      "avg_velocity": 4.125940187861402,
+      "max_velocity": 4.506895694543452,
+      "min_velocity": 3.395325323291645,
+      "sample_count": 6
+    },
+    {
+      "pwm": 70,
+      "avg_velocity": 5.292306231451455,
+      "max_velocity": 5.687066925633193,
+      "min_velocity": 4.536823288611462,
+      "sample_count": 6
+    },
+    {
+      "pwm": 80,
+      "avg_velocity": 6.02112131108904,
+      "max_velocity": 6.805257847305379,
+      "min_velocity": 5.626180324687114,
+      "sample_count": 6
+    },
+    {
+      "pwm": 90,
+      "avg_velocity": 6.96458948913119,
+      "max_velocity": 7.927178733950707,
+      "min_velocity": 5.645086454652533,
+      "sample_count": 6
+    },
+    {
+      "pwm": 100,
+      "avg_velocity": 10.765227303029823,
+      "max_velocity": 19.2572695426142,
+      "min_velocity": 6.780942469314097,
+      "sample_count": 6
+    }
+  ],
+  "right_motor": [
+    {
+      "pwm": 0,
+      "avg_velocity": 0.0,
+      "max_velocity": 0.0,
+      "min_velocity": 0.0,
+      "sample_count": 6
+    },
+    {
+      "pwm": 30,
+      "avg_velocity": 0.0,
+      "max_velocity": 0.0,
+      "min_velocity": 0.0,
+      "sample_count": 6
+    },
+    {
+      "pwm": 40,
+      "avg_velocity": 1.6909963175337166,
+      "max_velocity": 2.2565687303517,
+      "min_velocity": 1.1253565249918174,
+      "sample_count": 6
+    },
+    {
+      "pwm": 50,
+      "avg_velocity": 3.205057466956983,
+      "max_velocity": 3.402817434950399,
+      "min_velocity": 2.255668466000493,
+      "sample_count": 6
+    },
+    {
+      "pwm": 60,
+      "avg_velocity": 4.320179667355952,
+      "max_velocity": 4.53678036791011,
+      "min_velocity": 3.3810710570504927,
+      "sample_count": 6
+    },
+    {
+      "pwm": 70,
+      "avg_velocity": 5.663614004880752,
+      "max_velocity": 6.8160016086213,
+      "min_velocity": 4.511241068687787,
+      "sample_count": 6
+    },
+    {
+      "pwm": 80,
+      "avg_velocity": 6.227598472719452,
+      "max_velocity": 6.823868689069973,
+      "min_velocity": 5.617581604228867,
+      "sample_count": 6
+    },
+    {
+      "pwm": 90,
+      "avg_velocity": 7.015581836901063,
+      "max_velocity": 7.895981746688196,
+      "min_velocity": 6.77676738433625,
+      "sample_count": 5
+    },
+    {
+      "pwm": 100,
+      "avg_velocity": 7.536520510904615,
+      "max_velocity": 7.937286809813046,
+      "min_velocity": 6.794236342845041,
+      "sample_count": 6
+    }
+  ],
+  "test_config": {
+    "pwm_values": [
+      0,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90,
+      100
+    ],
+    "test_duration": 4.0,
+    "settle_time": 1.5
+  }
+}

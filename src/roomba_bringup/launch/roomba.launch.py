@@ -40,11 +40,18 @@ def generate_launch_description():
             output='screen',
         ),
         
-        Node(
+        # Node(
+        #     package='roomba_bringup',
+        #     executable='motor_driver',
+        #     name='motor_driver_node',
+        #     output='screen',
+        # ),
+                Node(
             package='roomba_bringup',
-            executable='motor_driver',
-            name='motor_driver_node',
+            executable='simple_velocity_controller',
+            name='velocity_controller_node',
             output='screen',
+
         ),
         
 
