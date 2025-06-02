@@ -32,9 +32,6 @@ setup(
             'test_motors = roomba_bringup.test_motor_control:main',  
             'encoder_validator = roomba_bringup.encoder_val_node:main',
             'motor_personality = roomba_bringup.motor_personality_node:main',
-            'single_wheel_pid = roomba_bringup.single_wheel_pid_node:main',
-            'pid_test_tool = roomba_bringup.pid_test_tool_node:main',
-            'simple_test_tool = roomba_bringup.simple_test_tool_node:main',
         ],
     },
 )
