@@ -45,8 +45,6 @@ class SimpleVelocityController(Node):
         }
         
         # Safety limits
-        self.max_linear_velocity = 0.6   # m/s
-        self.max_angular_velocity = 2.0  # rad/s
         self.max_wheel_velocity = 6.9    # rad/s (stay below max tested)
         
         # Initialize GPIO (same as your motor_driver.py)
@@ -86,7 +84,7 @@ class SimpleVelocityController(Node):
         self.get_logger().info('🚀 Simple Velocity Controller Started')
         self.get_logger().info(f'📏 Wheel separation: {self.wheel_separation}m')
         self.get_logger().info(f'⚙️  Using linear motor mapping (no PID needed)')
-        self.get_logger().info(f'🔒 Safety limits: {self.max_linear_velocity}m/s linear, {self.max_angular_velocity}rad/s angular')
+       
         self.get_logger().info(f'🕐 Control frequency: 4Hz (sensor rate: 2Hz)')
 
     def wheel_velocities_callback(self, msg):
