@@ -7,6 +7,15 @@
   <maintainer email="krishna24002@gmail.com">krish</maintainer>
   <license>TODO: License declaration</license>
 
+   <!-- ADDED: Missing dependencies for ros2_control -->
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>diff_drive_controller</exec_depend>
+  <exec_depend>joint_state_broadcaster</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>roomba_interfaces</exec_depend>
+  <exec_depend>roomba_hardware</exec_depend>
+  <exec_depend>roomba_description</exec_depend>
+
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>

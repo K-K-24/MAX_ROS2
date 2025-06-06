@@ -59,6 +59,8 @@ class SimpleVelocityController(Node):
         self.pwm_left.start(0)
         
         # Control state
+        self.current_left_wheel_vel = 0.0
+        self.current_right_wheel_vel = 0.0
         self.current_linear_vel = 0.0
         self.current_angular_vel = 0.0
         self.last_cmd_time = time.time()
@@ -154,13 +156,15 @@ class SimpleVelocityController(Node):
             pwm_magnitude = motor['max_pwm']
             self.get_logger().warn(f'⚠️  {motor_side} velocity {abs_velocity:.2f} clamped to {motor["max_velocity"]:.2f} rad/s')
         else:
-            # Linear interpolation within characterized range
-            velocity_range = motor['max_velocity'] - motor['min_velocity']
-            pwm_range = motor['max_pwm'] - motor['min_pwm']
+            # # Linear interpolation within characterized range
+            # velocity_range = motor['max_velocity'] - motor['min_velocity']
+            # pwm_range = motor['max_pwm'] - motor['min_pwm']
             
-            # Linear mapping: PWM = min_pwm + (velocity - min_velocity) * (pwm_range / velocity_range)
-            velocity_offset = abs_velocity - motor['min_velocity']
-            pwm_magnitude = motor['min_pwm'] + (velocity_offset * pwm_range / velocity_range)
+            # # Linear mapping: PWM = min_pwm + (velocity - min_velocity) * (pwm_range / velocity_range)
+            # velocity_offset = abs_velocity - motor['min_velocity']
+            # pwm_magnitude = motor['min_pwm'] + (velocity_offset * pwm_range / velocity_range)
+
+            pwm_magnitude = 10*abs_velocity + 20
             
             # Ensure within bounds
             pwm_magnitude = max(motor['min_pwm'], min(motor['max_pwm'], pwm_magnitude))

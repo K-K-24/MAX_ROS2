@@ -55,8 +55,8 @@ class MotorTester(Node):
         self.ang_vel_step = 0.1
         
         # Speed limits based on your ACTUAL motor capabilities
-        self.max_linear_vel = 0.3    # 30 cm/s (reasonable daily driving)
-        self.max_angular_vel = 2.5   # 2.5 rad/s (good turning speed)
+        self.max_linear_vel = 0.21    # 30 cm/s (reasonable daily driving)
+        self.max_angular_vel = 2.8   # 2.5 rad/s (good turning speed)
         
         # LUDICROUS mode limits - NOW WE'RE TALKING! 🏎️💨
         self.ludicrous_linear = 0.6    # 60 cm/s - FASTER than your old 50 cm/s!
