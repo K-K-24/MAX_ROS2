@@ -67,6 +67,14 @@ def generate_launch_description():
             name='simple_velocity_controller_node',
             output='screen',
         ),
+
+                # Simple velocity controller (receives commands from ros2_control)
+        Node(
+            package='roomba_bringup',
+            executable='odometry_node',
+            name='odometry_node',
+            output='screen',
+        ),
         
         # ros2_control Controller Manager
         Node(
