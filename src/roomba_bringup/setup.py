@@ -30,6 +30,7 @@ setup(
             'motor_driver = roomba_bringup.motor_driver:main',
             'simple_velocity_controller = roomba_bringup.simple_velocity_controller_node:main', 
             'simple_mapper = roomba_bringup.simple_mapper_node:main',
+            'localization = roomba_bringup.localization_node:main',
             'test_motors = roomba_bringup.test_motor_control:main',  
             'encoder_validator = roomba_bringup.encoder_val_node:main',
             'motor_personality = roomba_bringup.motor_personality_node:main',

@@ -72,6 +72,28 @@ class SimpleMapperNode(Node):
 		# Check if the cell coordinates are within the map bounds
 		return 0 <= x < self.height_cells and 0 <= y < self.width_cells
 
+	def publish_map(self):
+		map_msg = OccupancyGrid()
+
+		#Header
+		map_msg.header.stamp = self.get_clock().now().to_msg()
+		map_msg.header.frame_id = 'map'
+
+		#Map metadata
+		map_msg.info.resolution = self.cell_side / 100.0  # Convert cm to m
+		map_msg.info.width = self.width_cells
+		map_msg.info.height = self.height_cells
+
+		#Map origin
+		map_msg.info.origin.position.x = -0.88  # Centering the map origin
+		map_msg.info.origin.position.y = -1.54
+		map_msg.info.origin.position.z = 0.0
+		map_msg.info.origin.orientation.w = 1.0  # No rotation
+
+		map_msg.data = self.map_array.flatten().tolist()  # Flatten the 2D array to 1D list
+		self.map_pub.publish(map_msg)
+		self.get_logger().info('🗺️  Published updated map!')
+
 	def mapper_callback(self):
 		
 		self.mapper_count += 1
@@ -142,6 +164,8 @@ class SimpleMapperNode(Node):
 		
 		self.get_logger().info(f'📊 Map stats: {free_cells} free, {obstacle_cells} obstacles, {unknown_cells} unknown')
 		self.get_logger().info('🔄 ===== END MAPPER UPDATE =====\n')
+
+		self.publish_map()
 		
 
 def main(args=None):
