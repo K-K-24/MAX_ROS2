@@ -3,7 +3,7 @@ from rclpy.node import Node
 from std_msgs.msg import Float32
 from roomba_interfaces.msg import SensorData
 from nav_msgs.msg import OccupancyGrid
-from geometry_msgs.msg import PoseWithCovarianceStamped  #Standard Localization message
+from roomba_interfaces.msg import LocalizationData
 import numpy as np
 import math
 
@@ -17,7 +17,7 @@ class LocalizationNode(Node):
         self.imu_subscriber = self.create_subscription(Float32,'/imu',self.imu_callback,10)
         self.sensor_subscriber = self.create_subscription(SensorData,'/wheel_states',self.sensor_callback,10)
         
-        self.loc_publisher = self.create_publisher(PoseWithCovarianceStamped,'/loc',10)
+        self.loc_publisher = self.create_publisher(LocalizationData,'/loc',10)
         
         self.map_arr = None
         
@@ -162,8 +162,24 @@ class LocalizationNode(Node):
             self.get_logger().info("I'm Lost :) ")
 
         self.get_logger().info(f'🏁 Final position: grid=({self.grid_x},{self.grid_y}), confidence={self.confidence:.1f}%')
+
+        self.publish_loc_data()
         self.get_logger().info('🧭 ===== END LOCALIZATION CYCLE =====\n')
         
+
+    def publish_loc_data(self):
+        loc_msg = LocalizationData()
+        loc_msg.x = self.x
+        loc_msg.y = self.y
+        loc_msg.theta = self.theta
+        loc_msg.grid_x = self.grid_x
+        loc_msg.grid_y = self.grid_y
+        loc_msg.confidence = self.confidence
+      
+        
+        self.loc_publisher.publish(loc_msg)
+        
+        self.get_logger().debug(f'📍 Published Localization Data: {loc_msg}')
         
     def sensor_sim_func(self):
         # Using local variable instead of instance variable

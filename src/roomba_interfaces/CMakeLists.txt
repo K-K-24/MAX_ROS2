@@ -18,6 +18,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/JointState.msg"
   "msg/Odometry.msg"
   "msg/WheelVelocities.msg"
+  "msg/LocalizationData.msg"
 )
 
 if(BUILD_TESTING)

@@ -76,7 +76,7 @@ class SimpleVelocityController(Node):
         # UPDATED: Subscribe to direct wheel velocities (NO MORE CMD_VEL!)
         self.wheel_vel_sub = self.create_subscription(
             WheelVelocities, '/wheel_velocities', self.wheel_velocities_callback, 10)
-        # Control loop - run at 4Hz (2x sensor rate for responsiveness)
+        
         self.control_timer = self.create_timer(0.1, self.control_loop)
         
         # Safety check (keeping your existing logic)
@@ -87,13 +87,10 @@ class SimpleVelocityController(Node):
         self.get_logger().info(f'📏 Wheel separation: {self.wheel_separation}m')
         self.get_logger().info(f'⚙️  Using linear motor mapping (no PID needed)')
        
-        self.get_logger().info(f'🕐 Control frequency: 4Hz (sensor rate: 2Hz)')
+     
 
     def wheel_velocities_callback(self, msg):
-        """
-        NEW: Process direct wheel velocity commands (NO CONVERSION!)
-        This eliminates the cmd_vel → wheel velocity conversion entirely.
-        """
+
         self.last_cmd_time = time.time()
         
         # Apply wheel velocity limits for safety
