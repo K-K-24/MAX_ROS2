@@ -1,8 +1,8 @@
-int grid_x
-int grid_y
+int32 grid_x
+int32 grid_y
 
 float32 x
 float32 y
 float32 theta
 
-int confidence
+float32 confidence

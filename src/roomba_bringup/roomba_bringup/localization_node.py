@@ -52,7 +52,7 @@ class LocalizationNode(Node):
         
         self.cum_jump = 5 #cm
         
-        self.timer = self.create_timer(1,self.localization_callback)
+        self.timer = self.create_timer(0.5,self.localization_callback)
         
         self.match_score  = None
 
@@ -141,7 +141,7 @@ class LocalizationNode(Node):
             new_confidence += 10
             self.get_logger().info('✅ Good sensor match - confidence increased')
         elif self.match_score < 50:
-            new_confidence -= 20
+            new_confidence -= 10
             self.get_logger().info('❌ Poor sensor match - confidence decreased')
         else:
             self.get_logger().info('➖ Average sensor match - confidence unchanged')

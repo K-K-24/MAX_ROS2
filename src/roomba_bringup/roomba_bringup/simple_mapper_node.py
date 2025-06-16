@@ -17,7 +17,7 @@ class SimpleMapperNode(Node):
 
 		self.map_pub = self.create_publisher(OccupancyGrid, '/map', 10)
 
-		self.timer = self.create_timer(1, self.mapper_callback)
+		self.timer = self.create_timer(0.5, self.mapper_callback)
 
 		self.map_height = 3
 		self.map_width = 2
