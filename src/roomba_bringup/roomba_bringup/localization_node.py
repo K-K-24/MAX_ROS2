@@ -45,7 +45,7 @@ class LocalizationNode(Node):
         self.grid_x = 7
         self.grid_y = 4
         
-        self.confidence = 95
+        self.confidence = 95.0
         
         self.actual_obstacle_dist = 0.0
         self.predicted_obstacle_dist = 0.0
@@ -146,7 +146,7 @@ class LocalizationNode(Node):
         else:
             self.get_logger().info('➖ Average sensor match - confidence unchanged')
             
-        self.confidence = max(0,min(95,new_confidence))
+        self.confidence = max(0.0,min(95.0,new_confidence))
 
         self.get_logger().info(f'📈 Confidence: {old_confidence:.1f}% → {self.confidence:.1f}%')
 
