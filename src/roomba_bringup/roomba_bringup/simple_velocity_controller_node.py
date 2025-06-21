@@ -123,8 +123,11 @@ class SimpleVelocityController(Node):
         self.get_logger().debug(f'🎯 Direct wheel velocities: L={self.current_left_wheel_vel:.2f}, R={self.current_right_wheel_vel:.2f} rad/s')
         
         # Convert to PWM using linear mapping (NO KINEMATICS CONVERSION!)
-        left_pwm = self.velocity_to_pwm(self.current_left_wheel_vel, 'left')
-        right_pwm = self.velocity_to_pwm(self.current_right_wheel_vel, 'right')
+        calculated_left_pwm = self.velocity_to_pwm(self.current_left_wheel_vel, 'left')
+        calculated_right_pwm = self.velocity_to_pwm(self.current_right_wheel_vel, 'right')
+
+        left_pwm = 0.95 * calculated_left_pwm
+        right_pwm = 1 * calculated_right_pwm
         
         # Apply motor commands
         self.set_motor_speeds(left_pwm, right_pwm)

@@ -51,8 +51,8 @@ class MotorTester(Node):
         self.angular_vel = 0.0
         
         # Velocity settings - PROPERLY UNLEASHED! 🚀
-        self.lin_vel_step = 0.02  # Small steps for precise control
-        self.ang_vel_step = 0.1
+        self.lin_vel_step = 0.0  # Small steps for precise control
+        self.ang_vel_step = 0.0
         
         # Speed limits based on your ACTUAL motor capabilities
         self.max_linear_vel = 0.21    # 21 cm/s 
@@ -134,7 +134,8 @@ def main():
                 break
                 
             elif key == 'w':
-                node.linear_vel += node.lin_vel_step
+                node.linear_vel = 0.1
+                node.angular_vel = 0.0
                 max_speed = node.ludicrous_linear if node.ludicrous_mode else node.max_linear_vel
                 node.linear_vel = min(node.linear_vel, max_speed)
                 node.publish_velocity()
@@ -146,13 +147,15 @@ def main():
                 node.publish_velocity()
                 
             elif key == 'a':
-                node.angular_vel += node.ang_vel_step
+                node.linear_vel = 0.0
+                node.angular_vel = 1.4
                 max_angular = node.ludicrous_angular if node.ludicrous_mode else node.max_angular_vel
                 node.angular_vel = min(node.angular_vel, max_angular)
                 node.publish_velocity()
                 
             elif key == 'd':
-                node.angular_vel -= node.ang_vel_step
+                node.linear_vel = 0.0
+                node.angular_vel = -1.4
                 max_angular = node.ludicrous_angular if node.ludicrous_mode else node.max_angular_vel
                 node.angular_vel = max(node.angular_vel, -max_angular)
                 node.publish_velocity()
