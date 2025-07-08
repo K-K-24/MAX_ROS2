@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "created_at": "2025-06-24T20:04:04.991324",
+    "created_at": "2025-06-24T20:03:30.933685",
     "height_cells": 4,
     "width_cells": 4,
     "cell_size_cm": 22,
@@ -11,19 +11,19 @@
   },
   "map_array": [
     [
-      -1,
+      0,
       0,
       0,
       0
     ],
     [
-      -1,
+      0,
       -1,
       0,
       -1
     ],
     [
-      -1,
+      0,
       -1,
       0,
       -1
@@ -36,9 +36,9 @@
     ]
   ],
   "statistics": {
-    "free_cells": 10,
+    "free_cells": 7,
     "obstacle_cells": 0,
-    "unknown_cells": 6,
-    "total_updates": 124
+    "unknown_cells": 9,
+    "total_updates": 90
   }
 }

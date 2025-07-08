@@ -29,8 +29,8 @@ class SimpleMapperNode(Node):
 		self.map_width = 1
 		self.cell_side = 22   # Length of the robot in cm
 
-		self.height_cells = 5
-		self.width_cells = 5
+		self.height_cells = 4
+		self.width_cells = 4
 
 		self.map_array = np.zeros((self.height_cells, self.width_cells), dtype=np.int8)
 

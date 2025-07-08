@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "created_at": "2025-06-24T20:04:04.991324",
+    "created_at": "2025-06-24T20:04:00.927074",
     "height_cells": 4,
     "width_cells": 4,
     "cell_size_cm": 22,
@@ -39,6 +39,6 @@
     "free_cells": 10,
     "obstacle_cells": 0,
     "unknown_cells": 6,
-    "total_updates": 124
+    "total_updates": 120
   }
 }

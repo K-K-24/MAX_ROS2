@@ -35,6 +35,9 @@ setup(
             'test_motors = roomba_bringup.test_motor_control:main',  
             'encoder_validator = roomba_bringup.encoder_val_node:main',
             'motor_personality = roomba_bringup.motor_personality_node:main',
+            'camera_node = roomba_bringup.camera_node:main',
+            'fake_camera_node = roomba_bringup.fake_camera_node:main',
+            'object_detect_node = roomba_bringup.object_detect_node:main'
         ],
     },
 )

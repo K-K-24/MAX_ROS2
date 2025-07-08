@@ -23,6 +23,8 @@ class IMUNode(Node):
         try:
             yaw = self.imu.euler[0]
             if yaw is not None:
+
+                self.get_logger().info(f'IMU yaw: {yaw} degrees')
                 msg = Float32()
                 msg.data = -math.radians(yaw)
                 self.orientation_publisher.publish(msg)

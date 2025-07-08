@@ -57,13 +57,10 @@ def generate_launch_description():
         
         # Rosbridge WebSocket Server
         Node(
-            package='rosbridge_server',
-            executable='rosbridge_websocket',
-            name='rosbridge_websocket',
+            package='foxglove_bridge',
+            executable='foxglove_bridge',
+            name='foxglove_bridge',
             output='screen',
-            parameters=[{
-                'port': 9090,
-                'address': '0.0.0.0'
-            }]
+            arguments = ['--host', '0.0.0.0', '--port', '9090']
         )
     ])

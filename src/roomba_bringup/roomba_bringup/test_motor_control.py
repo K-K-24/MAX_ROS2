@@ -134,7 +134,7 @@ def main():
                 break
                 
             elif key == 'w':
-                node.linear_vel = 0.1
+                node.linear_vel = 0.08
                 node.angular_vel = 0.0
                 max_speed = node.ludicrous_linear if node.ludicrous_mode else node.max_linear_vel
                 node.linear_vel = min(node.linear_vel, max_speed)
@@ -148,14 +148,14 @@ def main():
                 
             elif key == 'a':
                 node.linear_vel = 0.0
-                node.angular_vel = 1.4
+                node.angular_vel = 1.0
                 max_angular = node.ludicrous_angular if node.ludicrous_mode else node.max_angular_vel
                 node.angular_vel = min(node.angular_vel, max_angular)
                 node.publish_velocity()
                 
             elif key == 'd':
                 node.linear_vel = 0.0
-                node.angular_vel = -1.4
+                node.angular_vel = -1.0
                 max_angular = node.ludicrous_angular if node.ludicrous_mode else node.max_angular_vel
                 node.angular_vel = max(node.angular_vel, -max_angular)
                 node.publish_velocity()

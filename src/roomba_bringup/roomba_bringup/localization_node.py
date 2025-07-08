@@ -31,8 +31,8 @@ class LocalizationNode(Node):
         self.height = 100
         self.width = 100
         
-        self.height_cells = 5
-        self.width_cells = 5
+        self.height_cells = 4
+        self.width_cells = 4
 
         self.cum_left = float(0.0)
         self.cum_right = float(0.0)
@@ -155,7 +155,7 @@ class LocalizationNode(Node):
         self.actual_obstacle_dist = float(msg.ultrasonic_distance)
         
     def is_valid_coord(self, x, y):
-        return (-55 <= x <= 55 and -55 <= y <= 55)
+        return (- 55 <= x <= 55 and -55 <= y <= 55)
         
     def is_valid_grid(self, grid_x, grid_y):
         return (0 <= grid_x < self.height_cells and 0 <= grid_y < self.width_cells)  
