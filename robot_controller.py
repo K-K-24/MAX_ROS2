@@ -8,6 +8,7 @@ import math
 import RPi.GPIO as GPIO
 import matplotlib.pyplot as plt
 import numpy as np
+from path_planner import PathPlanner
 
 class RobotController:
     def __init__(self):
@@ -33,7 +34,7 @@ class RobotController:
         self.Kp_enc,self.Ki_enc,self.Kd_enc = [1.0,0.0,0.0]
         self.Kp_yaw,self.Ki_yaw,self.Kd_yaw = [500.0,0.0,0.0]
 
-        self.Kp_turn,self.Ki_turn,self.Kd_turn = [100.0,0.,35.]
+        self.Kp_turn,self.Ki_turn,self.Kd_turn = [300.0,0.,400.]
 
                 # Initialize GPIO (same as your motor_driver.py)
         self.IN1, self.IN2, self.IN3, self.IN4 = 17, 18, 22, 23
@@ -191,7 +192,7 @@ class RobotController:
 
          
 
-            if(err_angle < 0.064 ):
+            if( -0.017 <err_angle < 0.017 ):
                 print(f"Error: {err_angle} - Breaking.......")
                 break
 
@@ -210,6 +211,8 @@ class RobotController:
         left_speed = self.clip_speed(left_speed)
         right_speed = self.clip_speed(right_speed)
 
+       
+
         if left_speed > 0:
             GPIO.output(self.IN3,GPIO.HIGH)
             GPIO.output(self.IN4,GPIO.LOW)
@@ -226,8 +229,8 @@ class RobotController:
             GPIO.output(self.IN2,GPIO.HIGH)
             self.pwm_right.ChangeDutyCycle(right_speed)
         elif right_speed < 0:
-            GPIO.output(self.IN3,GPIO.HIGH)
-            GPIO.output(self.IN4,GPIO.LOW)
+            GPIO.output(self.IN1,GPIO.HIGH)
+            GPIO.output(self.IN2,GPIO.LOW)
             self.pwm_right.ChangeDutyCycle(abs(right_speed))
         else:
             self.pwm_right.ChangeDutyCycle(0)
@@ -325,7 +328,7 @@ class RobotController:
             if(err_dist<self.tol_d):
                 self.set_motor_speeds(0,0)
                 time.sleep(2)
-                LC = self.left_count - start_count_left    # Calculating again considering the intertia
+                LC = self.left_count - start_count_left    # Calculating again considering the inertia
                 RC = self.right_count - start_count_right
                 d = self.calculate_distance_covered(LC,RC)
                 self.x += d*math.cos(avg_yaw)
@@ -333,6 +336,21 @@ class RobotController:
                 self.trajectory.append((self.x,self.y))
                 break
             self.set_motor_speeds(speed_L,speed_R)
+
+    def follow_path(self,path):
+        for i in range(len(path)-1):
+            current = path[i]
+            next = path[i+1]
+
+            theta = math.atan2((next[1]-current[1]),(next[0]-current[0]))
+            angle = theta - self.yaw
+
+            # print(math.degrees(angle))
+            self.turn_by_angle(angle)
+            dist = ((next[0]-current[0])**2 + (next[1]-current[1])**2)**0.5
+            time.sleep(1)
+            self.forward_controller(dist)
+            time.sleep(1)
 
 
     def cleanup(self):
@@ -345,25 +363,57 @@ class RobotController:
 
 def main(args=None):
     try:
-        robot_controller = RobotController()
+        room_x_start = 0
+        room_x_end = 350
+
+        room_y_start = 0
+        room_y_end = 300
+
+
+        obstacle1 = {
+        "type": "rectangle",
+        "name": "wall",
+        "x_start": 310,
+        "x_end": 350,
+        "y_start": 0,
+        "y_end": 40
+        }
+
+        obstacle2 = {
+            "type":"rectangle",
+            "name":"table",
+            "x_start":0,
+            "x_end":70,
+            "y_start":190,
+            "y_end":300
+        }
+
+        obstacle3 = {
+            "type":"rectangle",
+            "name":"doormat",
+            "x_start":250,
+            "x_end":310,
+            "y_start":255,
+            "y_end":300
+        }
+
+        obstacles = [obstacle1,obstacle2,obstacle3]
+
+        path_planner = PathPlanner(room_x_start,room_x_end,room_y_start,room_y_end,obstacles)
+        start_node = (60,60)
+        end_node =(340,280)
+        nodes = path_planner.generate_prm_nodes(50,start_node,end_node)
+        connections = path_planner.build_roadmap(nodes,5)
+
+        path = path_planner.a_star_search(start_node,connections,end_node,nodes)
       
-        robot_controller.forward_controller(30)
-        robot_controller.turn_by_angle(90)
-        robot_controller.forward_controller(30)
-        robot_controller.turn_by_angle(90)
-        robot_controller.forward_controller(30)
-        robot_controller.turn_by_angle(90)
-        robot_controller.forward_controller(30)
-        robot_controller.turn_by_angle(90)
 
-        time.sleep(0.5)
-        print(robot_controller.yaw)
+        path_planner.generate_plot(nodes,connections,path)
 
-        print("Made a rectangle!!")
-
-       
-
-        # print("Plot has been made and saved.......")
+        #Robot Controller
+        robot_controller = RobotController()
+ 
+        robot_controller.follow_path(path)
             
 
     except KeyboardInterrupt:
