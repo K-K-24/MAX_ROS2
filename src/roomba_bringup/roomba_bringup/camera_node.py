@@ -16,7 +16,7 @@ class CameraNode(Node):
 
 
         #Camera initialization
-        self.cam = cv2.VideoCapture(-1)
+        self.cam = cv2.VideoCapture(0)
         
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)

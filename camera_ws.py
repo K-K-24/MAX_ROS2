@@ -107,3 +107,4 @@ print(f"Object Coordinates: x = {robot_x}, y = {robot_y}, Label = {label}")
 
 
 
+

@@ -32,9 +32,9 @@ class RobotController:
 
         self.Kp_fwd,self.Ki_fwd,self.Kd_fwd = [5.0,0.0,0.0]
         self.Kp_enc,self.Ki_enc,self.Kd_enc = [1.0,0.0,0.0]
-        self.Kp_yaw,self.Ki_yaw,self.Kd_yaw = [500.0,0.0,0.0]
+        self.Kp_yaw,self.Ki_yaw,self.Kd_yaw = [700.0,0.0,0.0]
 
-        self.Kp_turn,self.Ki_turn,self.Kd_turn = [300.0,0.,400.]
+        self.Kp_turn,self.Ki_turn,self.Kd_turn = [200.0,0.,300.]
 
                 # Initialize GPIO (same as your motor_driver.py)
         self.IN1, self.IN2, self.IN3, self.IN4 = 17, 18, 22, 23
@@ -192,14 +192,14 @@ class RobotController:
 
          
 
-            if( -0.017 <err_angle < 0.017 ):
+            if( -0.06936<err_angle<0.06936 ):
                 print(f"Error: {err_angle} - Breaking.......")
                 break
 
             self.set_motor_speeds(left_speed,right_speed)
 
         self.set_motor_speeds(0,0)
-        time.sleep(2)
+        time.sleep(1)
 
     def clip_speed(self,speed):
         speed = min(80,speed)
@@ -346,10 +346,19 @@ class RobotController:
             angle = theta - self.yaw
 
             # print(math.degrees(angle))
-            self.turn_by_angle(angle)
-            dist = ((next[0]-current[0])**2 + (next[1]-current[1])**2)**0.5
+            print(f'Current Angle: {math.degrees(self.yaw)}, Target angle {math.degrees(angle)}')
+            self.turn_by_angle(math.degrees(angle))
             time.sleep(1)
-            self.forward_controller(dist)
+
+            print(f'Successfully made the turn - Current yaw is {math.degrees(self.yaw)} ')
+
+
+            
+            dist = ((next[0]-current[0])**2 + (next[1]-current[1])**2)**0.5
+            print(f'Moving distance {dist}cm')
+            
+            self.forward_controller(dist-15)
+            print(f'Successfully made the forward movement.....')
             time.sleep(1)
 
 
@@ -397,7 +406,16 @@ def main(args=None):
             "y_end":300
         }
 
-        obstacles = [obstacle1,obstacle2,obstacle3]
+        obstacle4 = {
+            "type":"rectangle",
+            "name":"tile",
+            "x_start":120,
+            "x_end":180,
+            "y_start":120,
+            "y_end":180
+        }
+
+        obstacles = [obstacle1,obstacle2,obstacle3,obstacle4]
 
         path_planner = PathPlanner(room_x_start,room_x_end,room_y_start,room_y_end,obstacles)
         start_node = (60,60)
@@ -406,14 +424,18 @@ def main(args=None):
         connections = path_planner.build_roadmap(nodes,5)
 
         path = path_planner.a_star_search(start_node,connections,end_node,nodes)
+
+        trimmed = path_planner.trim_path(path)
       
 
-        path_planner.generate_plot(nodes,connections,path)
+        path_planner.generate_plot(nodes,connections,path,trimmed)
+
+
 
         #Robot Controller
         robot_controller = RobotController()
  
-        robot_controller.follow_path(path)
+        robot_controller.follow_path(trimmed)
             
 
     except KeyboardInterrupt:
