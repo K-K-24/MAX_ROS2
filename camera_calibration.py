@@ -2,22 +2,22 @@ import cv2
 import numpy as np
 
 #Step - 1
-# cap = cv2.VideoCapture(0)
-# cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-# cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-# cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
-# if cap.isOpened():
-#     ret, frame = cap.read() 
-#     if ret:
-#         filename = f"calibration_image.jpg"
-#         frame = cv2.rotate(frame, cv2.ROTATE_180)  
-#         cv2.imwrite(filename, frame)
-#         print(f"✅ Success on /dev/video — saved as {filename}")
-#     else:
-#         print(f"❌ /dev/video opened but no frame.")
-#     cap.release()
-# else:
-#     print(f"❌ Could not open /dev/video")
+cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
+if cap.isOpened():
+    ret, frame = cap.read() 
+    if ret:
+        filename = f"multiple_objects_image.jpg"
+        frame = cv2.rotate(frame, cv2.ROTATE_180)  
+        cv2.imwrite(filename, frame)
+        print(f"✅ Success on /dev/video — saved as {filename}")
+    else:
+        print(f"❌ /dev/video opened but no frame.")
+    cap.release()
+else:
+    print(f"❌ Could not open /dev/video")
 
 
 #Step-2
@@ -71,15 +71,15 @@ import numpy as np
 # np.save("homography_matrix.npy", H)
 
 #Step-3 ( Test the matrix)
-clicks =[(296, 278)]
-# Test function
-def pixel_to_world(pixel_x, pixel_y, H):
-    pixel_point = np.array([[[pixel_x, pixel_y]]], dtype=np.float32)
-    world_point = cv2.perspectiveTransform(pixel_point, H)
-    return world_point[0][0]
+# clicks =[(296, 278)]
+# # Test function
+# def pixel_to_world(pixel_x, pixel_y, H):
+#     pixel_point = np.array([[[pixel_x, pixel_y]]], dtype=np.float32)
+#     world_point = cv2.perspectiveTransform(pixel_point, H)
+#     return world_point[0][0]
 
-# Test on known points
-H = np.load("homography_matrix.npy")
-test_pixel = clicks[0]  # First clicked point
-result = pixel_to_world(test_pixel[0], test_pixel[1], H)
-print(f"Pixel {test_pixel} → World {result}")
+# # Test on known points
+# H = np.load("homography_matrix.npy")
+# test_pixel = clicks[0]  # First clicked point
+# result = pixel_to_world(test_pixel[0], test_pixel[1], H)
+# print(f"Pixel {test_pixel} → World {result}")
