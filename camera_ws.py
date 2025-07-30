@@ -86,8 +86,8 @@ real_object_width = 5
 d = (real_object_width * width) / pixel_object_width * 2 * math.tan(math.radians(field_of_view/2))
 
 #robot coordinates
-robot_x = d * math.sin(theta_in_rad)
-robot_y = d * math.cos(theta_in_rad)
+robot_x = d * math.cos(theta_in_rad)
+robot_y = d * math.sin(theta_in_rad)
 
 print(f"Object Coordinates: x = {robot_x}, y = {robot_y}, Label = {label}")
 

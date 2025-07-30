@@ -8,7 +8,11 @@ import math
 import RPi.GPIO as GPIO
 import matplotlib.pyplot as plt
 import numpy as np
+import cv2
 from path_planner import PathPlanner
+from obstacle_detect import Obstacle_Detector
+
+
 
 class RobotController:
     def __init__(self):
@@ -20,14 +24,24 @@ class RobotController:
                         # Initialize serial connection
         self.ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)
         self.ser.flush()
-        time.sleep(2)
+
+                        # Initialize camera connection
+                #Camera initialization
+        self.cam = cv2.VideoCapture(0)
+        
+        self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        self.cam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
+
 
         self.yaw = None
         self.left_count = None
         self.right_count = None
+        self.frame = None
 
         self.imu_thread = threading.Thread(target=self.read_imu, daemon=True)
         self.serial_thread = threading.Thread(target=self.read_serial, daemon=True)
+        self.camera_thread = threading.Thread(target=self.read_camera,daemon=True)
     
 
         self.Kp_fwd,self.Ki_fwd,self.Kd_fwd = [5.0,0.0,0.0]
@@ -99,6 +113,17 @@ class RobotController:
             
         except Exception as e:
             print("Encoder read error:", e)
+
+    def read_camera(self):
+        try:
+            while(self.threads_running):
+                ret, frame = self.cam.read()
+
+                if ret: 
+                    self.frame = cv2.rotate(frame, cv2.ROTATE_180)  
+
+        except Exception as e:
+            print("Frame capture error: ",e)
 
     def publish_odometry(self,left_count,right_count,yaw):
         try:
