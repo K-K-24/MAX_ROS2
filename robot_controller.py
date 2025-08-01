@@ -28,7 +28,7 @@ class RobotController:
                         # Initialize camera connection
                 #Camera initialization
         self.cam = cv2.VideoCapture(0)
-        
+
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
         self.cam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
@@ -38,24 +38,25 @@ class RobotController:
         self.left_count = None
         self.right_count = None
         self.frame = None
+        self.obs_dist = None
 
         self.imu_thread = threading.Thread(target=self.read_imu, daemon=True)
         self.serial_thread = threading.Thread(target=self.read_serial, daemon=True)
         self.camera_thread = threading.Thread(target=self.read_camera,daemon=True)
-    
+
 
         self.Kp_fwd,self.Ki_fwd,self.Kd_fwd = [5.0,0.0,0.0]
         self.Kp_enc,self.Ki_enc,self.Kd_enc = [1.0,0.0,0.0]
         self.Kp_yaw,self.Ki_yaw,self.Kd_yaw = [700.0,0.0,0.0]
 
-        self.Kp_turn,self.Ki_turn,self.Kd_turn = [200.0,0.,300.]
+        self.Kp_turn,self.Ki_turn,self.Kd_turn = [350.0,0.,50.]
 
                 # Initialize GPIO (same as your motor_driver.py)
         self.IN1, self.IN2, self.IN3, self.IN4 = 17, 18, 22, 23
         self.ENA, self.ENB = 25, 26
         GPIO.setmode(GPIO.BCM)
         GPIO.setup([self.IN1, self.IN2, self.IN3, self.IN4, self.ENA, self.ENB], GPIO.OUT)
-        
+
         self.pwm_right = GPIO.PWM(self.ENA, 100)
         self.pwm_left = GPIO.PWM(self.ENB, 100)
         self.pwm_right.start(0)
@@ -68,7 +69,8 @@ class RobotController:
 
         self.imu_thread.start()
         self.serial_thread.start()
-   
+        self.camera_thread.start()
+
         self.trajectory = []
         self.x = 0.0
         self.y = 0.0
@@ -79,15 +81,15 @@ class RobotController:
         self.RC_last = 0
 
         self.first_reading = True
-      
 
-     
+
+
 
         time.sleep(2) # For the sensors to load the data into the variables
         #initialize variables
 
-       
-        
+
+
 
     def read_imu(self):
             while(self.threads_running):
@@ -95,7 +97,7 @@ class RobotController:
                 if ( yaw is not None):
                     self.yaw = self.normalize_angle_in_rad(-math.radians(yaw))
                 time.sleep(0.05)
-            
+
             # if self.yaw is not None:
             #     return self.yaw
 
@@ -105,12 +107,13 @@ class RobotController:
                 line = self.ser.readline().decode('utf-8').strip()
                 if line:
                     values = line.split(",")
-                        
+
                     if len(values) >= 2:
                         self.left_count = float(values[0])
                         self.right_count = float(values[1])
+                        self.obs_dist = float(values[2])
                 time.sleep(0.05)
-            
+
         except Exception as e:
             print("Encoder read error:", e)
 
@@ -119,35 +122,11 @@ class RobotController:
             while(self.threads_running):
                 ret, frame = self.cam.read()
 
-                if ret: 
-                    self.frame = cv2.rotate(frame, cv2.ROTATE_180)  
+                if ret:
+                    self.frame = cv2.rotate(frame, cv2.ROTATE_180)
 
         except Exception as e:
             print("Frame capture error: ",e)
-
-    def publish_odometry(self,left_count,right_count,yaw):
-        try:
-            if self.first_reading:
-                self.LC_last = left_count
-                self.RC_last = right_count
-                self.first_reading = False
-
-            LC = left_count - self.LC_last
-            RC = right_count - self.RC_last
-
-            self.LC_last = left_count
-            self.RC_last = right_count
-
-            displacement = self.calculate_distance_covered(LC,RC)
-
-            self.x += displacement * math.cos(yaw)
-            self.y += displacement * math.sin(yaw)
-
-            self.trajectory.append((self.x,self.y))
-
-
-        except:
-            print("Odometry Exception....")
 
     def publish_plot(self):
         # print(self.trajectory)
@@ -176,7 +155,7 @@ class RobotController:
 
         # plt.show()
 
-        
+
 
 
     def normalize_angle_in_rad(self,angle):
@@ -185,7 +164,7 @@ class RobotController:
         elif angle < -math.pi:
             angle += 2*math.pi
         return angle
-    
+
 
     def turn_by_angle(self,angle):
         start_angle = self.yaw
@@ -215,7 +194,7 @@ class RobotController:
 
             print(f"target_angle: {math.degrees(target_angle)}, Current_angle: {math.degrees(current_angle)}, Error: {(err_angle)}, left_speed: {left_speed}, right_speed: {right_speed}")
 
-         
+
 
             if( -0.06936<err_angle<0.06936 ):
                 print(f"Error: {err_angle} - Breaking.......")
@@ -225,18 +204,19 @@ class RobotController:
 
         self.set_motor_speeds(0,0)
         time.sleep(1)
-
+        print(math.degrees(self.yaw))
+        
     def clip_speed(self,speed):
         speed = min(80,speed)
         speed = max(-80,speed)
 
         return speed
-    
+
     def set_motor_speeds(self,left_speed,right_speed):
         left_speed = self.clip_speed(left_speed)
         right_speed = self.clip_speed(right_speed)
 
-       
+
 
         if left_speed > 0:
             GPIO.output(self.IN3,GPIO.HIGH)
@@ -266,7 +246,7 @@ class RobotController:
 
         return (left_distance + right_distance)/2
 
-    
+
     def forward_controller(self,max_dist):
         start_count_left = self.left_count
         start_count_right = self.right_count
@@ -295,7 +275,7 @@ class RobotController:
         speed_R = speed_sum/2
         self.set_motor_speeds(speed_L,speed_R)
 
-        self.tol_d = 5
+        self.tol_d = 10
 
         while True:
             time.sleep(0.05)
@@ -333,9 +313,9 @@ class RobotController:
 
             speed_diff = self.Kp_enc*err_enc + self.Ki_enc*err_enc_sum + self.Kd_enc*err_enc_diff + \
                          self.Kp_yaw*err_yaw + self.Ki_yaw*err_yaw_sum + self.Kd_yaw*err_yaw_diff
-            
+
             speed_diff = self.clip_speed(speed_diff)
-            
+
             speed_R = (speed_sum + speed_diff)/2
 
             speed_R = self.clip_speed(speed_R)
@@ -348,9 +328,9 @@ class RobotController:
 
             print(f"Start Theta: {math.degrees(start_yaw)}, Current Theta: {math.degrees(curr_yaw)},  Error: {math.degrees(err_yaw)}")
 
-            
 
-            if(err_dist<self.tol_d):
+
+            if( self.obs_dist < 30 or err_dist<self.tol_d):
                 self.set_motor_speeds(0,0)
                 time.sleep(2)
                 LC = self.left_count - start_count_left    # Calculating again considering the inertia
@@ -359,8 +339,12 @@ class RobotController:
                 self.x += d*math.cos(avg_yaw)
                 self.y += d*math.sin(avg_yaw)
                 self.trajectory.append((self.x,self.y))
+                if(err_dist > self.obs_dist):
+                  return False
                 break
             self.set_motor_speeds(speed_L,speed_R)
+
+        return True
 
     def follow_path(self,path):
         for i in range(len(path)-1):
@@ -378,13 +362,32 @@ class RobotController:
             print(f'Successfully made the turn - Current yaw is {math.degrees(self.yaw)} ')
 
 
-            
+
             dist = ((next[0]-current[0])**2 + (next[1]-current[1])**2)**0.5
-            print(f'Moving distance {dist}cm')
-            
-            self.forward_controller(dist-15)
+
+            ret_val = self.forward_controller(dist-15)
+
+            if(not ret_val):
+              print(f"Found an obstacle, aborting mission......")
+              return False
+
+
             print(f'Successfully made the forward movement.....')
             time.sleep(1)
+
+        return True
+
+
+    def robot_to_world_transform(self,x_r,y_r,robot_x,robot_y,robot_theta):
+
+        # Apply rotation + translation
+        x_w = x_r * math.cos(robot_theta) - y_r * math.sin(robot_theta) + robot_x
+        y_w = x_r * math.sin(robot_theta) + y_r * math.cos(robot_theta) + robot_y
+
+        print(f"World coords of the obstacle is: ({x_w},{y_w})")
+
+        return [x_w, y_w]
+
 
 
     def cleanup(self):
@@ -397,71 +400,70 @@ class RobotController:
 
 def main(args=None):
     try:
-        room_x_start = 0
-        room_x_end = 350
-
-        room_y_start = 0
-        room_y_end = 300
-
-
-        obstacle1 = {
-        "type": "rectangle",
-        "name": "wall",
-        "x_start": 310,
-        "x_end": 350,
-        "y_start": 0,
-        "y_end": 40
-        }
-
-        obstacle2 = {
-            "type":"rectangle",
-            "name":"table",
-            "x_start":0,
-            "x_end":70,
-            "y_start":190,
-            "y_end":300
-        }
-
-        obstacle3 = {
-            "type":"rectangle",
-            "name":"doormat",
-            "x_start":250,
-            "x_end":310,
-            "y_start":255,
-            "y_end":300
-        }
-
-        obstacle4 = {
-            "type":"rectangle",
-            "name":"tile",
-            "x_start":120,
-            "x_end":180,
-            "y_start":120,
-            "y_end":180
-        }
-
-        obstacles = [obstacle1,obstacle2,obstacle3,obstacle4]
-
-        path_planner = PathPlanner(room_x_start,room_x_end,room_y_start,room_y_end,obstacles)
-        start_node = (60,60)
-        end_node =(340,280)
-        nodes = path_planner.generate_prm_nodes(50,start_node,end_node)
-        connections = path_planner.build_roadmap(nodes,5)
-
-        path = path_planner.a_star_search(start_node,connections,end_node,nodes)
-
-        trimmed = path_planner.trim_path(path)
-      
-
-        path_planner.generate_plot(nodes,connections,path,trimmed)
-
-
-
-        #Robot Controller
         robot_controller = RobotController()
- 
-        robot_controller.follow_path(trimmed)
-            
+        # robot_controller.turn_by_angle(5)
+        robot_controller.forward_controller(60)
+    #   robot_controller = RobotController()
+    #   end_node = (340,280)
+
+    #   while True:
+    #     obstacle_detector = Obstacle_Detector()
+    #     obstacle_detector.get_all_obstacles(robot_controller.frame)
+
+    #     robot_x,robot_y,robot_theta = robot_controller.x,robot_controller.y,robot_controller.yaw
+
+    #     obstacles = []
+    #     all_obstacles = obstacle_detector.obstacles
+
+    #     print(f"{len(all_obstacles)} obstacles detected.......")
+
+    #     for obstacle in all_obstacles:
+    #       print(obstacle)
+    #       print(obstacle[0],obstacle[1])
+    #       d = ((obstacle[0])**2 + (obstacle[1])**2)**(1/2)
+    #       dist_to_target = ((robot_controller.x - end_node[0])**2 + (robot_controller.y - end_node[1])**2)**0.5
+
+    #       print(f"Distance of obstacle from robot - {d}....... Distance to the final target - {dist_to_target}")
+
+    #       if (d<dist_to_target):
+    #         obs_world = robot_controller.robot_to_world_transform(obstacle[0],obstacle[1],robot_x,robot_y,robot_theta)
+    #         obs_to_rect = {
+    #           "type":"rectangle",
+    #           "name":"unknown",
+    #           "x_start":obs_world[0],
+    #           "x_end":obs_world[0]+15,
+    #           "y_start":obs_world[1],
+    #           "y_end":obs_world[1]+15
+    #           }
+    #         obstacles.append(obs_to_rect)
+
+
+    #     room_x_start = robot_controller.x
+    #     room_x_end = 350
+
+    #     room_y_start = robot_controller.y
+    #     room_y_end = 300
+
+
+    #     path_planner = PathPlanner(room_x_start,room_x_end,room_y_start,room_y_end,obstacles)
+    #     start_node = (robot_controller.x,robot_controller.y)
+    #     nodes = path_planner.generate_prm_nodes(50,start_node,end_node)
+    #     connections = path_planner.build_roadmap(nodes,5)
+    #     # print(connections)
+
+    #     path = path_planner.a_star_search(start_node,connections,end_node,nodes)
+
+    #     trimmed = path_planner.trim_path(path)
+    #     # print(trimmed)
+    #     # path_planner.generate_plot(nodes,connections,path,trimmed)
+
+    #     success = robot_controller.follow_path(trimmed)
+
+    #     if(success):
+    #       break
+
+
+
 
     except KeyboardInterrupt:
         print("Stopping.....")

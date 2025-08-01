@@ -251,7 +251,7 @@ class PathPlanner:
         ax.yaxis.set_major_locator(MultipleLocator(60))
         ax.grid(True, alpha=0.3)
         # plt.show()
-        plt.savefig("PRM NODES.png",dpi=300,bbox_inches="tight")
+        plt.savefig("Planned_Path.png",dpi=300,bbox_inches="tight")
 
 
 

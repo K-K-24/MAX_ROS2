@@ -8,7 +8,7 @@ class Obstacle_Detector:
         self.H = np.load("homography_matrix.npy")
         self.obstacles = []
 
-    
+
     def image_to_world(self,pixel_x, pixel_y):
         H = np.load("homography_matrix.npy")
         pixel_point = np.array([[[pixel_x, pixel_y]]], dtype=np.float32)
@@ -47,7 +47,7 @@ class Obstacle_Detector:
 
         for i in range(1,numLabels):
             if stats[i,cv2.CC_STAT_AREA] > 300:
-                print(i)
+            
 
                 object_mask = (labels==i).astype(np.uint8)*255
 
@@ -60,7 +60,7 @@ class Obstacle_Detector:
                 if(obstacle_posn[0] > 0):
                     self.obstacles.append(obstacle_posn)
 
-    
+
     def get_all_obstacles(self,img):
         # img = cv2.imread('black_flask.png')
 
@@ -75,6 +75,5 @@ class Obstacle_Detector:
 
         self.get__single_obstacle(mask)
 
-      
 
 
