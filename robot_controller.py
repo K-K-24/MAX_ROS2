@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use("Agg")
+
 import board
 import busio
 import adafruit_bno055
@@ -49,7 +52,7 @@ class RobotController:
         self.Kp_enc,self.Ki_enc,self.Kd_enc = [1.0,0.0,0.0]
         self.Kp_yaw,self.Ki_yaw,self.Kd_yaw = [700.0,0.0,0.0]
 
-        self.Kp_turn,self.Ki_turn,self.Kd_turn = [350.0,0.,50.]
+        self.Kp_turn,self.Ki_turn,self.Kd_turn = [300.0,0.,200.]
 
                 # Initialize GPIO (same as your motor_driver.py)
         self.IN1, self.IN2, self.IN3, self.IN4 = 17, 18, 22, 23
@@ -72,8 +75,8 @@ class RobotController:
         self.camera_thread.start()
 
         self.trajectory = []
-        self.x = 0.0
-        self.y = 0.0
+        self.x = 60.0
+        self.y = 60.0
 
         self.trajectory.append((self.x,self.y))
 
@@ -204,7 +207,7 @@ class RobotController:
 
         self.set_motor_speeds(0,0)
         time.sleep(1)
-        print(math.degrees(self.yaw))
+       
         
     def clip_speed(self,speed):
         speed = min(80,speed)
@@ -347,6 +350,8 @@ class RobotController:
         return True
 
     def follow_path(self,path):
+
+        print(path)
         for i in range(len(path)-1):
             current = path[i]
             next = path[i+1]
@@ -355,7 +360,7 @@ class RobotController:
             angle = theta - self.yaw
 
             # print(math.degrees(angle))
-            print(f'Current Angle: {math.degrees(self.yaw)}, Target angle {math.degrees(angle)}')
+            print(f'Current Angle: {math.degrees(self.yaw)}, Turn Angle: {math.degrees(angle)}')
             self.turn_by_angle(math.degrees(angle))
             time.sleep(1)
 
@@ -400,67 +405,72 @@ class RobotController:
 
 def main(args=None):
     try:
-        robot_controller = RobotController()
-        # robot_controller.turn_by_angle(5)
-        robot_controller.forward_controller(60)
-    #   robot_controller = RobotController()
-    #   end_node = (340,280)
+      robot_controller = RobotController()
+      end_node = (340,280)
+      obstacles = []
 
-    #   while True:
-    #     obstacle_detector = Obstacle_Detector()
-    #     obstacle_detector.get_all_obstacles(robot_controller.frame)
+      while True:
+        obstacle_detector = Obstacle_Detector()
+        obstacle_detector.get_all_obstacles(robot_controller.frame)
 
-    #     robot_x,robot_y,robot_theta = robot_controller.x,robot_controller.y,robot_controller.yaw
+        robot_x,robot_y,robot_theta = robot_controller.x,robot_controller.y,robot_controller.yaw
 
-    #     obstacles = []
-    #     all_obstacles = obstacle_detector.obstacles
+        
+        all_obstacles = obstacle_detector.obstacles
 
-    #     print(f"{len(all_obstacles)} obstacles detected.......")
+        print(f"{len(all_obstacles)} black obstacles detected by camera.......")
 
-    #     for obstacle in all_obstacles:
-    #       print(obstacle)
-    #       print(obstacle[0],obstacle[1])
-    #       d = ((obstacle[0])**2 + (obstacle[1])**2)**(1/2)
-    #       dist_to_target = ((robot_controller.x - end_node[0])**2 + (robot_controller.y - end_node[1])**2)**0.5
+        for obstacle in all_obstacles:
+          print(obstacle)
+          print(obstacle[0],obstacle[1])
+          d = ((obstacle[0])**2 + (obstacle[1])**2)**(1/2)
+          dist_to_target = ((robot_controller.x - end_node[0])**2 + (robot_controller.y - end_node[1])**2)**0.5
 
-    #       print(f"Distance of obstacle from robot - {d}....... Distance to the final target - {dist_to_target}")
+          print(f"Distance of obstacle from robot - {d}....... Distance to the final target - {dist_to_target}")
 
-    #       if (d<dist_to_target):
-    #         obs_world = robot_controller.robot_to_world_transform(obstacle[0],obstacle[1],robot_x,robot_y,robot_theta)
-    #         obs_to_rect = {
-    #           "type":"rectangle",
-    #           "name":"unknown",
-    #           "x_start":obs_world[0],
-    #           "x_end":obs_world[0]+15,
-    #           "y_start":obs_world[1],
-    #           "y_end":obs_world[1]+15
-    #           }
-    #         obstacles.append(obs_to_rect)
+          if (d<dist_to_target):
+            obs_world = robot_controller.robot_to_world_transform(obstacle[0],obstacle[1],robot_x,robot_y,robot_theta)
+            obs_to_rect = {
+              "type":"rectangle",
+              "name":"unknown",
+              "x_start":obs_world[0],
+              "x_end":obs_world[0]+15,
+              "y_start":obs_world[1]-15,
+              "y_end":obs_world[1]+15
+              }
+            obstacles.append(obs_to_rect)
 
 
-    #     room_x_start = robot_controller.x
-    #     room_x_end = 350
+        room_x_start = robot_controller.x
+        room_x_end = 350
 
-    #     room_y_start = robot_controller.y
-    #     room_y_end = 300
+        room_y_start = robot_controller.y
+        room_y_end = 300
 
 
-    #     path_planner = PathPlanner(room_x_start,room_x_end,room_y_start,room_y_end,obstacles)
-    #     start_node = (robot_controller.x,robot_controller.y)
-    #     nodes = path_planner.generate_prm_nodes(50,start_node,end_node)
-    #     connections = path_planner.build_roadmap(nodes,5)
-    #     # print(connections)
+        path_planner = PathPlanner(room_x_start,room_x_end,room_y_start,room_y_end,obstacles)
+        start_node = (robot_controller.x,robot_controller.y)
+        nodes = path_planner.generate_prm_nodes(50,start_node,end_node)
+        connections = path_planner.build_roadmap(nodes,5)
+        # print(connections)
 
-    #     path = path_planner.a_star_search(start_node,connections,end_node,nodes)
+        path = path_planner.a_star_search(start_node,connections,end_node,nodes)
 
-    #     trimmed = path_planner.trim_path(path)
-    #     # print(trimmed)
-    #     # path_planner.generate_plot(nodes,connections,path,trimmed)
+        trimmed = path_planner.trim_path(path)
 
-    #     success = robot_controller.follow_path(trimmed)
+        print("Trimmed path is being displayed here below.........")
+        print(trimmed)
 
-    #     if(success):
-    #       break
+        path_planner.generate_plot(nodes,connections,path,trimmed,robot_controller.trajectory)
+
+        success = robot_controller.follow_path(trimmed)
+
+        path_planner.generate_plot(nodes,connections,path,trimmed,robot_controller.trajectory)
+        print("Plot has been made and saved.......")
+
+
+        if(success):
+          break
 
 
 
@@ -470,8 +480,7 @@ def main(args=None):
     finally:
         robot_controller.cleanup()
         # time.sleep(2)
-        robot_controller.publish_plot()
-        print("Plot has been made and saved.......")
+        # robot_controller.publish_plot()
 
 if __name__ == "__main__":
     main()

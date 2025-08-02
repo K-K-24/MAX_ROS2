@@ -178,10 +178,11 @@ class PathPlanner:
         trimmed.append(path[far])
         cur = far
 
+
       return trimmed
 
 
-    def generate_plot(self,nodes,connections,path,trimmed):
+    def generate_plot(self,nodes,connections,path,trimmed,trajectory):
         fig,ax = plt.subplots(figsize=(12,8))
 
         room_rect = patches.Rectangle((
@@ -231,9 +232,14 @@ class PathPlanner:
         x_trim_points = [pnt[0] for pnt in trimmed]
         y_trim_points = [pnt[1] for pnt in trimmed]
 
+        x_traj_points = [pnt[0] for pnt in trajectory]
+        y_traj_points = [pnt[0] for pnt in trajectory]
+
         ax.plot(x_path_points, y_path_points, 'r-', linewidth=2, label="A* Path")
 
         ax.plot(x_trim_points, y_trim_points, 'g-', linewidth=2, label="Trimmed Path")
+
+        ax.plot(x_traj_points,y_traj_points,'k-',linewidth=2,markersize = 6, label="Robot Trajectory")
 
         # ax.plot(np.array(x_points),np.array(y_points),'b-',linewidth=1)
 
@@ -243,7 +249,7 @@ class PathPlanner:
         ax.set_ylim(self.room_bounds['y_min']-30,self.room_bounds['y_max']+30)
         ax.set_xlabel("X (cm)")
         ax.set_ylabel("Y (cm)")
-        ax.set_title("PRM Node Generation")
+        ax.set_title("Graph")
         ax.legend()
 
         #Set major ticks to 60cm intervals
@@ -251,7 +257,7 @@ class PathPlanner:
         ax.yaxis.set_major_locator(MultipleLocator(60))
         ax.grid(True, alpha=0.3)
         # plt.show()
-        plt.savefig("Planned_Path.png",dpi=300,bbox_inches="tight")
+        plt.savefig("Graph.png",dpi=300,bbox_inches="tight")
 
 
 
