@@ -68,6 +68,14 @@ class RobotController:
         self.ppr = 11
         self.circumference = 18.85
 
+        self.length = 19.3
+        self.width = 11
+
+        self.robot_rad = math.sqrt((self.length)**2 + (self.width)**2)
+
+        self.clearance_dist = self.robot_rad
+
+
         self.threads_running = True
 
         self.imu_thread.start()
@@ -88,21 +96,27 @@ class RobotController:
 
 
 
-        time.sleep(2) # For the sensors to load the data into the variables
+        time.sleep(20000) # For the sensors to load the data into the variables
         #initialize variables
 
 
 
 
     def read_imu(self):
-            while(self.threads_running):
-                yaw = self.imu.euler[0] #following ros convention
-                if ( yaw is not None):
-                    self.yaw = self.normalize_angle_in_rad(-math.radians(yaw))
-                time.sleep(0.05)
+        while(self.threads_running):
+            accel = self.imu.acceleration
+            gyro = self.imu.gyro
+            euler = self.imu.euler
+            print(f"Accel: {accel}")
+            print(f"Gyro: {gyro}")
+            print(f"Euler: {euler}")
+            time.sleep(1)
+            # while(self.threads_running):
+            #     yaw = self.imu.euler[0] #following ros convention
+            #     if ( yaw is not None):
+            #         self.yaw = self.normalize_angle_in_rad(-math.radians(yaw))
+            #     time.sleep(0.01)
 
-            # if self.yaw is not None:
-            #     return self.yaw
 
     def read_serial(self):
         try:
@@ -115,7 +129,7 @@ class RobotController:
                         self.left_count = float(values[0])
                         self.right_count = float(values[1])
                         self.obs_dist = float(values[2])
-                time.sleep(0.05)
+                time.sleep(0.01)
 
         except Exception as e:
             print("Encoder read error:", e)
@@ -333,7 +347,8 @@ class RobotController:
 
 
 
-            if( self.obs_dist < 30 or err_dist<self.tol_d):
+            if( self.obs_dist < self.clearance_dist or err_dist<self.tol_d):
+                print("Stop command sent......")
                 self.set_motor_speeds(0,0)
                 time.sleep(2)
                 LC = self.left_count - start_count_left    # Calculating again considering the inertia
@@ -406,71 +421,77 @@ class RobotController:
 def main(args=None):
     try:
       robot_controller = RobotController()
-      end_node = (340,280)
+      end_node = (300,240)
       obstacles = []
+      while(True):
+          print("Running.....")
 
-      while True:
-        obstacle_detector = Obstacle_Detector()
-        obstacle_detector.get_all_obstacles(robot_controller.frame)
+    #   robot_controller.forward_controller(60)
 
-        robot_x,robot_y,robot_theta = robot_controller.x,robot_controller.y,robot_controller.yaw
+    #   while True:
+    #     obstacle_detector = Obstacle_Detector()
+    #     obstacle_detector.get_all_obstacles(robot_controller.frame)
+
+    #     robot_x,robot_y,robot_theta = robot_controller.x,robot_controller.y,robot_controller.yaw
 
         
-        all_obstacles = obstacle_detector.obstacles
+    #     all_obstacles = obstacle_detector.obstacles
 
-        print(f"{len(all_obstacles)} black obstacles detected by camera.......")
+    #     print(f"{len(all_obstacles)} black obstacles detected by camera.......")
 
-        for obstacle in all_obstacles:
-          print(obstacle)
-          print(obstacle[0],obstacle[1])
-          d = ((obstacle[0])**2 + (obstacle[1])**2)**(1/2)
-          dist_to_target = ((robot_controller.x - end_node[0])**2 + (robot_controller.y - end_node[1])**2)**0.5
+    #     for obstacle in all_obstacles:
+    #       print(obstacle)
+    #       print(obstacle[0],obstacle[1])
+    #       d = ((obstacle[0])**2 + (obstacle[1])**2)**(1/2)
+    #       dist_to_target = ((robot_controller.x - end_node[0])**2 + (robot_controller.y - end_node[1])**2)**0.5
 
-          print(f"Distance of obstacle from robot - {d}....... Distance to the final target - {dist_to_target}")
+    #       print(f"Distance of obstacle from robot - {d}....... Distance to the final target - {dist_to_target}")
 
-          if (d<dist_to_target):
-            obs_world = robot_controller.robot_to_world_transform(obstacle[0],obstacle[1],robot_x,robot_y,robot_theta)
-            obs_to_rect = {
-              "type":"rectangle",
-              "name":"unknown",
-              "x_start":obs_world[0],
-              "x_end":obs_world[0]+15,
-              "y_start":obs_world[1]-15,
-              "y_end":obs_world[1]+15
-              }
-            obstacles.append(obs_to_rect)
-
-
-        room_x_start = robot_controller.x
-        room_x_end = 350
-
-        room_y_start = robot_controller.y
-        room_y_end = 300
+    #       if (d<dist_to_target):
+    #         obs_world = robot_controller.robot_to_world_transform(obstacle[0],obstacle[1],robot_x,robot_y,robot_theta)
+    #         obs_to_rect = {
+    #           "type":"rectangle",
+    #           "name":"unknown",
+    #           "x_start":obs_world[0],
+    #           "x_end":obs_world[0]+robot_controller.clearance_dist,
+    #           "y_start":obs_world[1]-robot_controller.clearance_dist,
+    #           "y_end":obs_world[1]+robot_controller.clearance_dist
+    #           }
+    #         obstacles.append(obs_to_rect)
 
 
-        path_planner = PathPlanner(room_x_start,room_x_end,room_y_start,room_y_end,obstacles)
-        start_node = (robot_controller.x,robot_controller.y)
-        nodes = path_planner.generate_prm_nodes(50,start_node,end_node)
-        connections = path_planner.build_roadmap(nodes,5)
-        # print(connections)
+    #     room_x_start = robot_controller.x
+    #     room_x_end = 350
 
-        path = path_planner.a_star_search(start_node,connections,end_node,nodes)
-
-        trimmed = path_planner.trim_path(path)
-
-        print("Trimmed path is being displayed here below.........")
-        print(trimmed)
-
-        path_planner.generate_plot(nodes,connections,path,trimmed,robot_controller.trajectory)
-
-        success = robot_controller.follow_path(trimmed)
-
-        path_planner.generate_plot(nodes,connections,path,trimmed,robot_controller.trajectory)
-        print("Plot has been made and saved.......")
+    #     room_y_start = robot_controller.y
+    #     room_y_end = 300
 
 
-        if(success):
-          break
+    #     path_planner = PathPlanner(room_x_start,room_x_end,room_y_start,room_y_end,obstacles)
+    #     start_node = (robot_controller.x,robot_controller.y)
+    #     nodes = path_planner.generate_prm_nodes(50,start_node,end_node)
+    #     connections = path_planner.build_roadmap(nodes,5)
+    #     # print(connections)
+
+    #     path = path_planner.a_star_search(start_node,connections,end_node,nodes)
+
+    #     trimmed = path_planner.trim_path(path)
+
+    #     print("Trimmed path is being displayed here below.........")
+    #     print(trimmed)
+
+    #     # path_planner.generate_plot(nodes,connections,path,trimmed,robot_controller.trajectory)
+
+    #     success = robot_controller.follow_path(trimmed)
+
+    #     print(robot_controller.x,robot_controller.y)
+
+    #     path_planner.generate_plot(nodes,connections,path,trimmed,robot_controller.trajectory)
+    #     print("Plot has been made and saved.......")
+
+
+    #     if(success):
+    #       break
 
 
 
