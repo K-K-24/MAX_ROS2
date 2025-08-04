@@ -51,12 +51,12 @@ class MotorTester(Node):
         self.angular_vel = 0.0
         
         # Velocity settings - PROPERLY UNLEASHED! 🚀
-        self.lin_vel_step = 0.02  # Small steps for precise control
-        self.ang_vel_step = 0.1
+        self.lin_vel_step = 0.0  # Small steps for precise control
+        self.ang_vel_step = 0.0
         
         # Speed limits based on your ACTUAL motor capabilities
-        self.max_linear_vel = 0.3    # 30 cm/s (reasonable daily driving)
-        self.max_angular_vel = 2.5   # 2.5 rad/s (good turning speed)
+        self.max_linear_vel = 0.21    # 21 cm/s 
+        self.max_angular_vel = 2.8   # 2.5 rad/s 
         
         # LUDICROUS mode limits - NOW WE'RE TALKING! 🏎️💨
         self.ludicrous_linear = 0.6    # 60 cm/s - FASTER than your old 50 cm/s!
@@ -134,7 +134,8 @@ def main():
                 break
                 
             elif key == 'w':
-                node.linear_vel += node.lin_vel_step
+                node.linear_vel = 0.08
+                node.angular_vel = 0.0
                 max_speed = node.ludicrous_linear if node.ludicrous_mode else node.max_linear_vel
                 node.linear_vel = min(node.linear_vel, max_speed)
                 node.publish_velocity()
@@ -146,13 +147,15 @@ def main():
                 node.publish_velocity()
                 
             elif key == 'a':
-                node.angular_vel += node.ang_vel_step
+                node.linear_vel = 0.0
+                node.angular_vel = 1.0
                 max_angular = node.ludicrous_angular if node.ludicrous_mode else node.max_angular_vel
                 node.angular_vel = min(node.angular_vel, max_angular)
                 node.publish_velocity()
                 
             elif key == 'd':
-                node.angular_vel -= node.ang_vel_step
+                node.linear_vel = 0.0
+                node.angular_vel = -1.0
                 max_angular = node.ludicrous_angular if node.ludicrous_mode else node.max_angular_vel
                 node.angular_vel = max(node.angular_vel, -max_angular)
                 node.publish_velocity()

@@ -28,13 +28,16 @@ setup(
             'imu_node = roomba_bringup.imu_node:main',
             'odometry_node = roomba_bringup.odometry_node:main',
             'motor_driver = roomba_bringup.motor_driver:main',
-            'simple_velocity_controller = roomba_bringup.simple_velocity_controller_node:main',  # NEW!
+            'simple_velocity_controller = roomba_bringup.simple_velocity_controller_node:main', 
+            'simple_mapper = roomba_bringup.simple_mapper_node:main',
+            'localization = roomba_bringup.localization_node:main',
+            'path_planner = roomba_bringup.path_planner_node:main',
             'test_motors = roomba_bringup.test_motor_control:main',  
             'encoder_validator = roomba_bringup.encoder_val_node:main',
             'motor_personality = roomba_bringup.motor_personality_node:main',
-            'single_wheel_pid = roomba_bringup.single_wheel_pid_node:main',
-            'pid_test_tool = roomba_bringup.pid_test_tool_node:main',
-            'simple_test_tool = roomba_bringup.simple_test_tool_node:main',
+            'camera_node = roomba_bringup.camera_node:main',
+            'fake_camera_node = roomba_bringup.fake_camera_node:main',
+            'object_detect_node = roomba_bringup.object_detect_node:main'
         ],
     },
 )

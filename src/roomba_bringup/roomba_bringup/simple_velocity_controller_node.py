@@ -5,7 +5,7 @@ import time
 import math
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Bool, Float32
-from roomba_interfaces.msg import SensorData
+from roomba_interfaces.msg import SensorData, WheelVelocities
 
 class SimpleVelocityController(Node):
     """
@@ -45,9 +45,7 @@ class SimpleVelocityController(Node):
         }
         
         # Safety limits
-        self.max_linear_velocity = 0.5   # m/s
-        self.max_angular_velocity = 2.0  # rad/s
-        self.max_wheel_velocity = 6.5    # rad/s (stay below max tested)
+        self.max_wheel_velocity = 6.9    # rad/s (stay below max tested)
         
         # Initialize GPIO (same as your motor_driver.py)
         self.IN1, self.IN2, self.IN3, self.IN4 = 17, 18, 22, 23
@@ -61,6 +59,8 @@ class SimpleVelocityController(Node):
         self.pwm_left.start(0)
         
         # Control state
+        self.current_left_wheel_vel = 0.0
+        self.current_right_wheel_vel = 0.0
         self.current_linear_vel = 0.0
         self.current_angular_vel = 0.0
         self.last_cmd_time = time.time()
@@ -73,11 +73,10 @@ class SimpleVelocityController(Node):
         self.SAFE_DISTANCE = 25.0
         self.avoiding_obstacle = False
         
-        # Subscribers (same as your original)
-        self.cmd_vel_sub = self.create_subscription(
-            Twist, '/cmd_vel', self.cmd_vel_callback, 10)
-            
-        # Control loop - run at 4Hz (2x sensor rate for responsiveness)
+        # UPDATED: Subscribe to direct wheel velocities (NO MORE CMD_VEL!)
+        self.wheel_vel_sub = self.create_subscription(
+            WheelVelocities, '/wheel_velocities', self.wheel_velocities_callback, 10)
+        
         self.control_timer = self.create_timer(0.1, self.control_loop)
         
         # Safety check (keeping your existing logic)
@@ -87,51 +86,48 @@ class SimpleVelocityController(Node):
         self.get_logger().info('🚀 Simple Velocity Controller Started')
         self.get_logger().info(f'📏 Wheel separation: {self.wheel_separation}m')
         self.get_logger().info(f'⚙️  Using linear motor mapping (no PID needed)')
-        self.get_logger().info(f'🔒 Safety limits: {self.max_linear_velocity}m/s linear, {self.max_angular_velocity}rad/s angular')
-        self.get_logger().info(f'🕐 Control frequency: 4Hz (sensor rate: 2Hz)')
-        
-    def cmd_vel_callback(self, msg):
-        """Process velocity commands with proper limits"""
+       
+     
+
+    def wheel_velocities_callback(self, msg):
+
         self.last_cmd_time = time.time()
         
-        # Apply velocity limits
-        self.current_linear_vel = max(-self.max_linear_velocity, 
-                                    min(self.max_linear_velocity, msg.linear.x))
-        self.current_angular_vel = max(-self.max_angular_velocity,
-                                     min(self.max_angular_velocity, msg.angular.z))
+        # Apply wheel velocity limits for safety
+        self.current_left_wheel_vel = max(-self.max_wheel_velocity, 
+                                        min(self.max_wheel_velocity, msg.left_motor_velocity))
+        self.current_right_wheel_vel = max(-self.max_wheel_velocity,
+                                         min(self.max_wheel_velocity, msg.right_motor_velocity))
         
-        self.get_logger().debug(f'📨 Cmd received: lin={self.current_linear_vel:.3f}, ang={self.current_angular_vel:.3f}')
+        self.get_logger().debug(f'📨 Direct wheel cmd: L={self.current_left_wheel_vel:.3f}, R={self.current_right_wheel_vel:.3f} rad/s')
+        
+
         
     def control_loop(self):
         """Main control loop - converts cmd_vel to motor PWM"""
         current_time = time.time()
         
         # Check for command timeout
+        # Check for command timeout
         if current_time - self.last_cmd_time > self.cmd_timeout:
-            self.current_linear_vel = 0.0
-            self.current_angular_vel = 0.0
+            self.current_left_wheel_vel = 0.0
+            self.current_right_wheel_vel = 0.0
             self.get_logger().debug('⏰ Command timeout - stopping')
+            
             
         # Safety check - stop if avoiding obstacle
         if self.avoiding_obstacle:
             self.stop_motors()
             return
-            
-        # Convert cmd_vel to individual wheel velocities (differential drive kinematics)
-        left_wheel_vel = (self.current_linear_vel - 
-                         self.current_angular_vel * self.wheel_separation / 2) / self.wheel_radius
-        right_wheel_vel = (self.current_linear_vel + 
-                          self.current_angular_vel * self.wheel_separation / 2) / self.wheel_radius
         
-        # Apply wheel velocity limits
-        left_wheel_vel = max(-self.max_wheel_velocity, min(self.max_wheel_velocity, left_wheel_vel))
-        right_wheel_vel = max(-self.max_wheel_velocity, min(self.max_wheel_velocity, right_wheel_vel))
+        self.get_logger().debug(f'🎯 Direct wheel velocities: L={self.current_left_wheel_vel:.2f}, R={self.current_right_wheel_vel:.2f} rad/s')
         
-        self.get_logger().debug(f'🎯 Target wheel velocities: L={left_wheel_vel:.2f}, R={right_wheel_vel:.2f} rad/s')
-        
-        # Convert to PWM using linear mapping
-        left_pwm = self.velocity_to_pwm(left_wheel_vel, 'left')
-        right_pwm = self.velocity_to_pwm(right_wheel_vel, 'right')
+        # Convert to PWM using linear mapping (NO KINEMATICS CONVERSION!)
+        calculated_left_pwm = self.velocity_to_pwm(self.current_left_wheel_vel, 'left')
+        calculated_right_pwm = self.velocity_to_pwm(self.current_right_wheel_vel, 'right')
+
+        left_pwm = 0.95 * calculated_left_pwm
+        right_pwm = 1 * calculated_right_pwm
         
         # Apply motor commands
         self.set_motor_speeds(left_pwm, right_pwm)
@@ -160,13 +156,15 @@ class SimpleVelocityController(Node):
             pwm_magnitude = motor['max_pwm']
             self.get_logger().warn(f'⚠️  {motor_side} velocity {abs_velocity:.2f} clamped to {motor["max_velocity"]:.2f} rad/s')
         else:
-            # Linear interpolation within characterized range
-            velocity_range = motor['max_velocity'] - motor['min_velocity']
-            pwm_range = motor['max_pwm'] - motor['min_pwm']
+            # # Linear interpolation within characterized range
+            # velocity_range = motor['max_velocity'] - motor['min_velocity']
+            # pwm_range = motor['max_pwm'] - motor['min_pwm']
             
-            # Linear mapping: PWM = min_pwm + (velocity - min_velocity) * (pwm_range / velocity_range)
-            velocity_offset = abs_velocity - motor['min_velocity']
-            pwm_magnitude = motor['min_pwm'] + (velocity_offset * pwm_range / velocity_range)
+            # # Linear mapping: PWM = min_pwm + (velocity - min_velocity) * (pwm_range / velocity_range)
+            # velocity_offset = abs_velocity - motor['min_velocity']
+            # pwm_magnitude = motor['min_pwm'] + (velocity_offset * pwm_range / velocity_range)
+
+            pwm_magnitude = 10*abs_velocity + 20
             
             # Ensure within bounds
             pwm_magnitude = max(motor['min_pwm'], min(motor['max_pwm'], pwm_magnitude))

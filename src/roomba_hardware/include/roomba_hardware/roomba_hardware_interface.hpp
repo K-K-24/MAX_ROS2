@@ -14,8 +14,9 @@
 
 // For communicating with your Python nodes
 #include "rclcpp/node.hpp"
-#include "geometry_msgs/msg/twist.hpp"
+#include "geometry_msgs/msg/twist.hpp"  // Keep for emergency stop
 #include "roomba_interfaces/msg/sensor_data.hpp"
+#include "roomba_interfaces/msg/wheel_velocities.hpp"  // NEW: Direct wheel control
 
 namespace roomba_hardware
 {
@@ -63,7 +64,13 @@ private:
   
   // ROS2 communication
   rclcpp::Node::SharedPtr node_;
-  rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
+  
+  // UPDATED: Direct wheel velocity publisher (bypasses cmd_vel conversion)
+  rclcpp::Publisher<roomba_interfaces::msg::WheelVelocities>::SharedPtr wheel_vel_pub_;
+  
+  // Keep cmd_vel publisher for emergency stop only
+  rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr emergency_stop_pub_;
+  
   rclcpp::Subscription<roomba_interfaces::msg::SensorData>::SharedPtr sensor_sub_;
   
   // Sensor data
@@ -74,16 +81,7 @@ private:
   rclcpp::Time last_sensor_time_;
   bool sensor_data_received_;
   
-  // Motor characterization data (from your findings)
-  struct MotorParams {
-    double min_pwm = 40.0;
-    double max_pwm = 90.0;
-    double min_velocity = 1.69;  // Lowest of your two motors
-    double max_velocity = 6.96;  // Highest of your two motors
-  } motor_params_;
-  
   void sensor_callback(const roomba_interfaces::msg::SensorData::SharedPtr msg);
-  double velocity_to_pwm(double velocity);
 };
 
 }  // namespace roomba_hardware

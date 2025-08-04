@@ -91,15 +91,20 @@ hardware_interface::CallbackReturn RoombaHardwareInterface::on_configure(
   // Create ROS2 node for communication
   node_ = std::make_shared<rclcpp::Node>("roomba_hardware_interface");
   
-  // Create publisher to send commands to your simple_velocity_controller
-  cmd_vel_pub_ = node_->create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
+  // UPDATED: Create direct wheel velocity publisher (bypasses cmd_vel conversion!)
+  wheel_vel_pub_ = node_->create_publisher<roomba_interfaces::msg::WheelVelocities>(
+    "/wheel_velocities", 10);
+  
+  // Keep emergency stop publisher for safety
+  emergency_stop_pub_ = node_->create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
   
   // Subscribe to sensor data from your sensor_reader
   sensor_sub_ = node_->create_subscription<roomba_interfaces::msg::SensorData>(
     "/wheel_states", 10,
     std::bind(&RoombaHardwareInterface::sensor_callback, this, std::placeholders::_1));
 
-  RCLCPP_INFO(rclcpp::get_logger("RoombaHardwareInterface"), "✅ Successfully configured!");
+  RCLCPP_INFO(rclcpp::get_logger("RoombaHardwareInterface"), 
+    "✅ Successfully configured! Publishing direct wheel velocities to /wheel_velocities");
 
   return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -168,11 +173,16 @@ hardware_interface::CallbackReturn RoombaHardwareInterface::on_deactivate(
 {
   RCLCPP_INFO(rclcpp::get_logger("RoombaHardwareInterface"), "🛑 Deactivating ...please wait...");
   
-  // Send stop command
-  auto twist_msg = geometry_msgs::msg::Twist();
-  twist_msg.linear.x = 0.0;
-  twist_msg.angular.z = 0.0;
-  cmd_vel_pub_->publish(twist_msg);
+  // Send stop command to both topics for safety
+  auto wheel_stop_msg = roomba_interfaces::msg::WheelVelocities();
+  wheel_stop_msg.left_motor_velocity = 0.0;
+  wheel_stop_msg.right_motor_velocity = 0.0;
+  wheel_vel_pub_->publish(wheel_stop_msg);
+  
+  auto twist_stop_msg = geometry_msgs::msg::Twist();
+  twist_stop_msg.linear.x = 0.0;
+  twist_stop_msg.angular.z = 0.0;
+  emergency_stop_pub_->publish(twist_stop_msg);
 
   RCLCPP_INFO(rclcpp::get_logger("RoombaHardwareInterface"), "✅ Successfully deactivated!");
 
@@ -213,30 +223,21 @@ hardware_interface::return_type RoombaHardwareInterface::write(
 {
   // 🔍 DEBUG: Show what commands we received
   RCLCPP_INFO(rclcpp::get_logger("RoombaHardwareInterface"), 
-    "📨 WRITE() called - Wheel commands received: L=%.3f, R=%.3f rad/s", 
+    "📨 DIRECT WHEEL COMMANDS: L=%.3f, R=%.3f rad/s", 
     left_wheel_vel_cmd_, right_wheel_vel_cmd_);
 
-  // Convert wheel velocities to robot linear/angular velocities
-  // Note: The commands come in as rad/s for each wheel
-  double linear_vel = (left_wheel_vel_cmd_ + right_wheel_vel_cmd_) * wheel_radius_ / 2.0;
-  double angular_vel = (right_wheel_vel_cmd_ - left_wheel_vel_cmd_) * wheel_radius_ / wheel_separation_;
-  
-  // 🔍 DEBUG: Show conversion results
-  RCLCPP_INFO(rclcpp::get_logger("RoombaHardwareInterface"), 
-    "🔄 Converted to robot motion: Linear=%.3f m/s, Angular=%.3f rad/s", 
-    linear_vel, angular_vel);
-  
-  // Create and publish cmd_vel message
-  auto twist_msg = geometry_msgs::msg::Twist();
-  twist_msg.linear.x = linear_vel;
-  twist_msg.angular.z = angular_vel;
+  // UPDATED: Send direct wheel velocities (NO CONVERSION!)
+  // This bypasses the cmd_vel → simple_velocity_controller conversion chain
+  auto wheel_msg = roomba_interfaces::msg::WheelVelocities();
+  wheel_msg.left_motor_velocity = left_wheel_vel_cmd_;   // Direct pass-through!
+  wheel_msg.right_motor_velocity = right_wheel_vel_cmd_; // Direct pass-through!
   
   // 🔍 DEBUG: Show what we're publishing
   RCLCPP_INFO(rclcpp::get_logger("RoombaHardwareInterface"), 
-    "📡 Publishing to /cmd_vel: x=%.3f, z=%.3f", 
-    twist_msg.linear.x, twist_msg.angular.z);
+    "📡 Publishing DIRECT wheel velocities: L=%.3f, R=%.3f rad/s", 
+    wheel_msg.left_motor_velocity, wheel_msg.right_motor_velocity);
   
-  cmd_vel_pub_->publish(twist_msg);
+  wheel_vel_pub_->publish(wheel_msg);
 
   return hardware_interface::return_type::OK;
 }

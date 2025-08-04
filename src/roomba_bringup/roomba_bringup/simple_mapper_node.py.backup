@@ -1,0 +1,179 @@
+import rclpy
+from rclpy.node import Node
+from roomba_interfaces.msg import SensorData
+from roomba_interfaces.msg import Odometry
+from nav_msgs.msg import OccupancyGrid
+import numpy as np
+import math
+
+class SimpleMapperNode(Node):
+
+	def __init__(self):
+		super().__init__('simple_mapper')
+
+		self.sensor_sub = self.create_subscription(SensorData, '/wheel_states', self.sensor_callback, 10)
+
+		self.odom_sub = self.create_subscription(Odometry, '/odom', self.odom_callback, 10)
+
+		self.map_pub = self.create_publisher(OccupancyGrid, '/map', 10)
+
+		self.timer = self.create_timer(1, self.mapper_callback)
+
+		self.map_height = 3
+		self.map_width = 2
+		self.cell_side = 22   # Length of the robot in cm
+
+		self.height_cells = 14
+		self.width_cells = 9
+
+		self.map_array = np.zeros((self.height_cells, self.width_cells), dtype=np.int8)
+
+		self.x = 0.0
+		self.y = 0.0
+		self.theta = 0.0
+
+		#Starting robot in the center of the map
+		self.grid_x = self.height_cells // 2       #(7,4)
+		self.grid_y = self.width_cells // 2
+
+		self.sum_grid_x = self.grid_x
+		self.sum_grid_y = self.grid_y
+
+		self.obstacle_dist = 0.0
+
+		self.odom_count = 0
+		self.sensor_count = 0
+		self.mapper_count = 0
+
+		self.last_x = 0.0       # Previous x coordinate of robot
+		self.last_y = 0.0       # Previous y coordinate of robot
+
+		self.next_cell_x = 0    # Coordinates of the next grid cell in front of the robot
+		self.next_cell_y = 0
+
+		self.get_logger().info('🗺️  Simple Mapper Node Started!')
+		self.get_logger().info(f'📐 Map setup: {self.height_cells}x{self.width_cells} cells, cell_size={self.cell_side}m')
+		self.get_logger().info(f'🎯 Robot starts at grid center: ({self.grid_x}, {self.grid_y})')
+
+	def odom_callback(self, msg):
+		self.x = msg.x
+		self.y = msg.y
+		self.theta = msg.theta
+		self.odom_count += 1
+
+		if self.odom_count % 10 == 0:  # Print every 10th odometry message
+			self.get_logger().info(f'📍 Odometry #{self.odom_count}: x={self.x:.2f}cm, y={self.y:.2f}cm, θ={math.degrees(self.theta):.1f}°')
+
+	def sensor_callback(self, msg):
+		self.obstacle_dist = msg.ultrasonic_distance
+
+		self.sensor_count += 1
+		if self.sensor_count % 5 == 0:  # Print every 10th sensor message
+			self.get_logger().info(f'📡 Sensor #{self.sensor_count}: ultrasonic_distance={self.obstacle_dist:.2f}cm')
+
+	def is_valid_cell(self, x, y):
+		# Check if the cell coordinates are within the map bounds
+		return 0 <= x < self.height_cells and 0 <= y < self.width_cells
+
+	def publish_map(self):
+		map_msg = OccupancyGrid()
+
+		#Header
+		map_msg.header.stamp = self.get_clock().now().to_msg()
+		map_msg.header.frame_id = 'map'
+
+		#Map metadata
+		map_msg.info.resolution = self.cell_side / 100.0  # Convert cm to m
+		map_msg.info.width = self.width_cells
+		map_msg.info.height = self.height_cells
+
+		#Map origin
+		map_msg.info.origin.position.x = -0.88  # Centering the map origin
+		map_msg.info.origin.position.y = -1.54
+		map_msg.info.origin.position.z = 0.0
+		map_msg.info.origin.orientation.w = 1.0  # No rotation
+
+		map_msg.data = self.map_array.flatten().tolist()  # Flatten the 2D array to 1D list
+		self.map_pub.publish(map_msg)
+		self.get_logger().info('🗺️  Published updated map!')
+
+	def mapper_callback(self):
+		
+		self.mapper_count += 1
+		
+		self.get_logger().info(f'\n🔄 ===== MAPPER UPDATE #{self.mapper_count} =====')
+		
+		diff_x = (self.x - self.last_x) / self.cell_side     # Find the difference in terms of number of cells
+		diff_y = (self.y - self.last_y) / self.cell_side
+
+		self.get_logger().info(f'📏 Movement: diff_x={diff_x:.3f} cells, diff_y={diff_y:.3f} cells')
+
+		old_grid_x = self.grid_x
+		old_grid_y = self.grid_y
+
+		self.sum_grid_x += diff_x
+		self.sum_grid_y += diff_y
+
+
+		self.grid_x = round(self.sum_grid_x)       
+		self.grid_y = round(self.sum_grid_y)
+
+		self.get_logger().info(f'🎯 Grid position: ({old_grid_x}, {old_grid_y}) → ({self.grid_x}, {self.grid_y})')
+
+		not_moving = self.last_x == self.x and self.last_y == self.y
+		self.get_logger().info(f'🚶 Movement status: {"STATIONARY" if not_moving else "MOVING"}')
+
+		if not not_moving:
+			next_x_raw = self.grid_x + round(math.cos(self.theta))   # Always finding the coord of the next cell with bounds checking
+			next_y_raw = self.grid_y + round(math.sin(self.theta))		# dsin and dcos for the distance - d( Cell size)
+
+			self.get_logger().info(f'👀 Next cell calculation: ({self.grid_x}, {self.grid_y}) + ({round(math.sin(self.theta))}, {round(math.cos(self.theta))}) = ({next_x_raw}, {next_y_raw})')
+
+			#Only update map if next cell is valid
+			if self.is_valid_cell(next_x_raw, next_y_raw):
+				self.next_cell_x = next_x_raw
+				self.next_cell_y = next_y_raw
+			
+				if self.obstacle_dist > self.cell_side:
+					self.map_array[self.next_cell_x, self.next_cell_y] = -1
+					self.get_logger().info(f'✅ Updated Current map cell ({self.next_cell_x}, {self.next_cell_y}) as Free space')
+				else:
+					self.map_array[self.next_cell_x, self.next_cell_y] = 100
+					self.get_logger().info(f'🚧 Updated Current map cell ({self.next_cell_x}, {self.next_cell_y}) as Obstacle')
+
+			else:	
+				self.get_logger().warning(f'⚠️  Next cell ({next_x_raw}, {next_y_raw}) is out of bounds!')
+
+
+		self.last_x = self.x        # Updation of the last_coordinates after 1 second
+		self.last_y = self.y
+		
+
+		#Marking robot position if it's valid
+		if self.is_valid_cell(self.grid_x, self.grid_y):
+			self.map_array[self.grid_x, self.grid_y] = -1
+			self.get_logger().info(f'🤖 Marked robot position ({self.grid_x}, {self.grid_y}) as FREE')
+		else:
+			self.get_logger().warning(f'⚠️  Robot position ({self.grid_x}, {self.grid_y}) is out of bounds!')
+	
+		#Map statistics
+		
+		free_cells = np.count_nonzero(self.map_array == -1)
+		obstacle_cells = np.count_nonzero(self.map_array == 100)
+		unknown_cells = np.count_nonzero(self.map_array == 0)
+		
+		self.get_logger().info(f'📊 Map stats: {free_cells} free, {obstacle_cells} obstacles, {unknown_cells} unknown')
+		self.get_logger().info('🔄 ===== END MAPPER UPDATE =====\n')
+
+		self.publish_map()
+		
+
+def main(args=None):
+	rclpy.init(args=args)
+	simple_mapper = SimpleMapperNode()
+	rclpy.spin(simple_mapper)
+	simple_mapper.destroy_node()
+	rclpy.shutdown()
+
+if __name__ == '__main__':
+	main()
