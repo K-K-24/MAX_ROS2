@@ -129,6 +129,7 @@ class RobotController:
                         self.left_count = float(values[0])
                         self.right_count = float(values[1])
                         self.obs_dist = float(values[2])
+                        print(self.left_count,self.right_count,self.obs_dist)
                 time.sleep(0.01)
 
         except Exception as e:

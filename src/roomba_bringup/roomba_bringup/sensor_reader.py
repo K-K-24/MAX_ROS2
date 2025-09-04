@@ -8,7 +8,7 @@ class SensorReaderNode(Node):
     def __init__(self):
         super().__init__('sensor_reader')
         self.publisher = self.create_publisher(SensorData, '/wheel_states', 10)
-        self.timer = self.create_timer(0.1, self.timer_callback)
+        self.timer = self.create_timer(0.01, self.timer_callback)
         
         # Initialize serial connection
         self.ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)
@@ -23,10 +23,13 @@ class SensorReaderNode(Node):
             if line:
                 values = line.split(",")
                 
-                if len(values) >= 3:
+                if len(values) >= 2:
                     left_distance = float(values[0])
                     right_distance = float(values[1])
                     ultrasonic_dist = float(values[2])
+
+                  
+                   
                     
                     msg = SensorData()
                     msg.left_encoder = left_distance

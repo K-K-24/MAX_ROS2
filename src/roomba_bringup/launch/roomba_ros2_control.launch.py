@@ -11,6 +11,7 @@ def generate_launch_description():
     # Get package directories
     roomba_description_dir = get_package_share_directory('roomba_description')
     roomba_bringup_dir = get_package_share_directory('roomba_bringup')
+    rp_lidar_dir = get_package_share_directory('rp_lidar_ros')
     
     # Paths
     urdf_file = os.path.join(roomba_description_dir, 'urdf', 'roomba.urdf.xacro')
@@ -68,7 +69,7 @@ def generate_launch_description():
             output='screen',
         ),
 
-                # Simple velocity controller (receives commands from ros2_control)
+               
         Node(
             package='roomba_bringup',
             executable='odometry_node',

@@ -61,8 +61,6 @@ class SimpleVelocityController(Node):
         # Control state
         self.current_left_wheel_vel = 0.0
         self.current_right_wheel_vel = 0.0
-        self.current_linear_vel = 0.0
-        self.current_angular_vel = 0.0
         self.last_cmd_time = time.time()
         self.cmd_timeout = 1.0  # Stop if no commands for 1 second
         
@@ -73,7 +71,7 @@ class SimpleVelocityController(Node):
         self.SAFE_DISTANCE = 25.0
         self.avoiding_obstacle = False
         
-        # UPDATED: Subscribe to direct wheel velocities (NO MORE CMD_VEL!)
+        # UPDATED: Subscribe to direct wheel velocities
         self.wheel_vel_sub = self.create_subscription(
             WheelVelocities, '/wheel_velocities', self.wheel_velocities_callback, 10)
         
@@ -98,10 +96,6 @@ class SimpleVelocityController(Node):
                                         min(self.max_wheel_velocity, msg.left_motor_velocity))
         self.current_right_wheel_vel = max(-self.max_wheel_velocity,
                                          min(self.max_wheel_velocity, msg.right_motor_velocity))
-        
-        self.get_logger().debug(f'📨 Direct wheel cmd: L={self.current_left_wheel_vel:.3f}, R={self.current_right_wheel_vel:.3f} rad/s')
-        
-
         
     def control_loop(self):
         """Main control loop - converts cmd_vel to motor PWM"""
