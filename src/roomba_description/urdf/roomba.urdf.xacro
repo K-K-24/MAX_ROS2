@@ -406,14 +406,14 @@
 
 
   <!-- ros2_control configuration - Uses the 2 controlled wheels -->
-  <ros2_control name="roomba_control" type="system">
+  <!-- <ros2_control name="roomba_control" type="system">
     <hardware>
       <plugin>roomba_hardware/RoombaHardwareInterface</plugin>
       <param name="wheel_radius">${wheel_radius}</param>
       <param name="wheel_separation">${wheel_separation}</param>
     </hardware>
     
-    <!-- Front Left = Left Motor -->
+   
     <joint name="front_left_wheel_joint">
       <command_interface name="velocity">
         <param name="min">-7.0</param>
@@ -423,7 +423,7 @@
       <state_interface name="velocity"/>
     </joint>
     
-    <!-- Rear Right = Right Motor -->
+   
     <joint name="rear_right_wheel_joint">
       <command_interface name="velocity">
         <param name="min">-7.0</param>
@@ -434,7 +434,7 @@
     </joint>
     
   
-  </ros2_control>
+  </ros2_control> -->
 </robot>
 
 
