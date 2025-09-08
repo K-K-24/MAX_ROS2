@@ -85,7 +85,7 @@ class OdometryNode(Node):
         
     def imu_callback(self, msg):
         self.theta = msg.data
-        self.publish_odometry()
+     
         
     def publish_odometry(self):
         # Publish custom odometry message

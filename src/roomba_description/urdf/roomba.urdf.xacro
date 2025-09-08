@@ -433,7 +433,7 @@
       <state_interface name="velocity"/>
     </joint>
     
-    <!-- front_right_wheel_joint and rear_left_wheel_joint are NOT controlled -->
+  
   </ros2_control>
 </robot>
 
