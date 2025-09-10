@@ -401,40 +401,8 @@
   <joint name="laser_joint" type="fixed">
     <parent link="top_chassis" />
     <child link="laser" />
-    <origin xyz="0 0 ${top_height/2 + 0.05}" rpy="0 0 0"/>
+    <origin xyz="0 0 ${top_height/2 + 0.05}" rpy="0 0 3.145"/>
   </joint>
-
-
-  <!-- ros2_control configuration - Uses the 2 controlled wheels -->
-  <!-- <ros2_control name="roomba_control" type="system">
-    <hardware>
-      <plugin>roomba_hardware/RoombaHardwareInterface</plugin>
-      <param name="wheel_radius">${wheel_radius}</param>
-      <param name="wheel_separation">${wheel_separation}</param>
-    </hardware>
-    
-   
-    <joint name="front_left_wheel_joint">
-      <command_interface name="velocity">
-        <param name="min">-7.0</param>
-        <param name="max">7.0</param>
-      </command_interface>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
-    </joint>
-    
-   
-    <joint name="rear_right_wheel_joint">
-      <command_interface name="velocity">
-        <param name="min">-7.0</param>
-        <param name="max">7.0</param>
-      </command_interface>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
-    </joint>
-    
-  
-  </ros2_control> -->
 </robot>
 
 
