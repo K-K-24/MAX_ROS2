@@ -11,7 +11,7 @@ class SensorReaderNode(Node):
         self.timer = self.create_timer(0.1, self.timer_callback)
         
         # Initialize serial connection
-        self.ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)
+        self.ser = serial.Serial('/dev/ttyUSB1', 115200, timeout=1)
         self.ser.flush()
         time.sleep(2)
         
