@@ -20,6 +20,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/WheelVelocities.msg"
   "msg/LocalizationData.msg"
   "msg/RobotCoord.msg"
+  "msg/ImuData.msg"
 )
 
 if(BUILD_TESTING)

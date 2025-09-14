@@ -5,12 +5,13 @@ import busio
 import adafruit_bno055
 import math
 from std_msgs.msg import Float32
-from geometry_msgs.msg import Vector3
+from roomba_interfaces.msg import ImuData
+
 
 class IMUNode(Node):
     def __init__(self):
         super().__init__('imu_node')
-        self.orientation_publisher = self.create_publisher(Float32, '/imu', 10)
+        self.orientation_publisher = self.create_publisher(ImuData, '/imu', 10)
         self.timer = self.create_timer(0.1, self.timer_callback)
         
         # Initialize IMU
@@ -22,12 +23,15 @@ class IMUNode(Node):
     def timer_callback(self):
         try:
             yaw = self.imu.euler[0]
-            if yaw is not None:
+            w_z = self.imu.gyro[2]
+            if yaw and w_z is not None:
 
        
-                msg = Float32()
-                msg.data = -math.radians(yaw)
+                msg = ImuData()
+                msg.yaw = -math.radians(yaw)
+                msg.w_z = w_z
                 self.get_logger().info(f'IMU yaw: {yaw} degrees')
+                self.get_logger().info(f'Angular Vel(z-axis): {w_z} rad/s')
                 self.orientation_publisher.publish(msg)
         except Exception as e:
             self.get_logger().error(f'IMU read error: {e}')

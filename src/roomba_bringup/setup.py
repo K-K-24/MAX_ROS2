@@ -27,6 +27,7 @@ setup(
             'sensor_reader = roomba_bringup.sensor_reader:main',
             'imu_node = roomba_bringup.imu_node:main',
             'odometry_node = roomba_bringup.odometry_node:main',
+            'kf_odom_node = roomba_bringup.kf_odom_node:main',
             'motor_driver = roomba_bringup.motor_driver:main',
             'simple_velocity_controller = roomba_bringup.simple_velocity_controller_node:main', 
             'simple_mapper = roomba_bringup.simple_mapper_node:main',

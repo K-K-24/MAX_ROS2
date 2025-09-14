@@ -2,11 +2,12 @@ import rclpy
 from rclpy.node import Node
 import math
 from std_msgs.msg import Float32
-from roomba_interfaces.msg import SensorData, Odometry
+from roomba_interfaces.msg import SensorData, Odometry, ImuData
 from nav_msgs.msg import Odometry as NavOdom
 from geometry_msgs.msg import Quaternion
 from tf2_ros import TransformBroadcaster
 from geometry_msgs.msg import TransformStamped
+
 
 def euler_to_quaternion(roll, pitch, yaw):
     qx = math.sin(roll/2) * math.cos(pitch/2) * math.cos(yaw/2) - math.cos(roll/2) * math.sin(pitch/2) * math.sin(yaw/2)
@@ -30,7 +31,7 @@ class OdometryNode(Node):
             self.sensor_callback,
             10)
         self.imu_subscription = self.create_subscription(
-            Float32,
+            ImuData,
             '/imu',
             self.imu_callback,
             10)
@@ -84,7 +85,7 @@ class OdometryNode(Node):
         self.publish_odometry()
         
     def imu_callback(self, msg):
-        self.theta = msg.data
+        self.theta = msg.yaw
      
         
     def publish_odometry(self):
