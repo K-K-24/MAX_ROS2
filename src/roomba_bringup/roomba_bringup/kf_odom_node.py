@@ -3,12 +3,22 @@ from rclpy.node import Node
 import time
 import math
 import numpy as np
-from roomba_interfaces.msg import SensorData, Odometry, ImuData
+from roomba_interfaces.msg import SensorData, ImuData
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Quaternion, TransformStamped
+from tf2_ros import TransformBroadcaster
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
 class OdomNode(Node):
 
     def __init__(self):
         super().__init__("kf_odom_node")
+
+        self.nav_odom_publisher = self.create_publisher(Odometry, '/odom', 10)
+
+        self.tf_broadcaster = TransformBroadcaster(self)
 
         self.angular_comp = None
         self.w_z = 0
@@ -22,12 +32,23 @@ class OdomNode(Node):
         self.last_right = 0
         self.first_reading = True
 
+        self.x = 0.0
+        self.y = 0.0
+
+        self.x_odom = []
+        self.y_odom = []
+
+        self.x_kf_odom = []
+        self.y_kf_odom = []
+
+        self.residuals = []
+
         self.have_imu = False
         self.enc_cnt = 0
 
         self.imu_subscriber = self.create_subscription(ImuData,"/imu",self.imu_callback,10)
 
-        self.sensor_subscriber = self.create_subscription(SensorData,'/sensor_data',self.sensor_callback,10)
+        self.sensor_subscriber = self.create_subscription(SensorData,'/wheel_states',self.sensor_callback,10)
 
         
         #KF - INITIALIZATION
@@ -50,9 +71,9 @@ class OdomNode(Node):
                    [0, 0, 0, 0, 0 ,0.5]])
 
 
-        self.r = np.array([[0.01, 0, 0],
+        self.r = np.array([[0.15, 0, 0],
                   [0,0.03,0],
-                  [0,0,0.02]])
+                  [0,0,0.05]])
         
         self.h = np.array([[0,0,0,1,0,0],
                   [0,0,0,0,1,0],
@@ -94,14 +115,13 @@ class OdomNode(Node):
         if (self.first_reading):
             self.last_left = msg.left_encoder
             self.last_right = msg.right_encoder
-            self.first_reading = False
+            self.first_reading = False 
             self.enc_cnt = 1
             return
 
         self.total_LC = msg.left_encoder
         self.total_RC = msg.right_encoder
         self.enc_cnt += 1
-
 
     def distance_covered(self,LC,RC):
         left_distance = (self.circumference/self.ppr)*LC
@@ -111,20 +131,30 @@ class OdomNode(Node):
 
     def filter_callback(self):
 
-        if not self.have_imu and self.enc_cnt < 2:
+        if not self.have_imu or self.enc_cnt < 2:
             return
         
         
 
         curr_time = time.time()
         dt = curr_time - self.last_time
+        if ( dt <= 0):
+            return
         self.last_time = curr_time
 
         delta_lc = self.total_LC - self.last_left
         delta_rc = self.total_RC - self.last_right
 
+        d = self.distance_covered(delta_lc,delta_rc)
 
-        v_odom = (self.distance_covered(delta_lc,delta_rc))/dt
+        self.x += d*math.cos(self.theta)
+        self.y += d*math.sin(self.theta)
+
+        self.x_odom.append(self.x*100)
+        self.y_odom.append(self.y*100)
+
+
+        v_odom = d/dt
 
         self.zk = np.array([v_odom,float(self.w_z),float(self.theta)],dtype=float)
 
@@ -145,6 +175,9 @@ class OdomNode(Node):
 
         measurement_residual = self.zk - self.h.dot(self.xk)
 
+        self.residuals.append(measurement_residual)
+
+
         residual_covariance = self.h.dot(self.pk).dot(self.h.T) + self.r
 
         k_k = (self.pk).dot(self.h.T).dot(np.linalg.inv(residual_covariance))
@@ -156,20 +189,109 @@ class OdomNode(Node):
         self.last_left = self.total_LC
         self.last_right = self.total_RC
 
+        odom = Odometry()
+        odom.header.stamp = self.get_clock().now().to_msg()
+        odom.header.frame_id = "odom"
+        odom.child.frame_id = "base_link"
+
+        odom.pose.pose.position.x = self.xk[0]
+        odom.pose.pose.position.y = self.xk[1]
+        odom.pose.pose.position.z = 0.0
+
+        quat = self.euler_to_quaternion(0.0,0.0,self.theta)
+        odom.pose.pose.orientation = quat
+
+        self.nav_odom_publisher.publish(odom)
+
+        t = TransformStamped()
+        t.header.stamp = self.get_clock().now().to_msg()
+        t.header.frame_id = 'odom'
+        t.child_frame_id = 'base_link'
+        t.transform.translation.x = self.xk[0]
+        t.transform.translation.y = self.xk[1]
+        t.transform.translation.z = 0.0
+        t.transform.rotation = quat
+        
+        self.tf_broadcaster.sendTransform(t)
+
+        self.x_kf_odom.append(self.xk[0]*100)
+        self.y_kf_odom.append(self.xk[1]*100)
+
         self.get_logger().info(f'X-Coord:{self.xk[0]*100:.3f}, Y-Coord:{self.xk[1]*100:.3f}')
+
+    def analyze(self,residuals,name):
+        mean = np.mean(residuals)
+        std = np.std(residuals)
+        print(f"{name}: mean = {mean:.4f}, std={std:.4f}")
+        plt.hist(residuals,bins=40,alpha=0.6,label=name,histtype='step',linewidth=2)
+
+    def publish_residual_plot(self):
+        res = np.array(self.residuals)
+        res_v,res_w,res_theta = res[:,0],res[:,1],res[:,2]
+
+        plt.figure(figsize=(10,5))
+
+        self.analyze(res_v, "v(odom)")
+        self.analyze(res_w,"wz (imu)")
+        self.analyze(res_theta,"theta (imu)")
+
+        plt.legend()
+        plt.title("Residual Histograms")
+        plt.xlabel("Residual Value")
+        plt.ylabel("Frequency")
+        plt.tight_layout()
+        plt.savefig("residuals_hist.png",dpi=200)
+        plt.close()
+
+    def euler_to_quaternion(self,roll, pitch, yaw):
+        qx = math.sin(roll/2) * math.cos(pitch/2) * math.cos(yaw/2) - math.cos(roll/2) * math.sin(pitch/2) * math.sin(yaw/2)
+        qy = math.cos(roll/2) * math.sin(pitch/2) * math.cos(yaw/2) + math.sin(roll/2) * math.cos(pitch/2) * math.sin(yaw/2)
+        qz = math.cos(roll/2) * math.cos(pitch/2) * math.sin(yaw/2) - math.sin(roll/2) * math.sin(pitch/2) * math.cos(yaw/2)
+        qw = math.cos(roll/2) * math.cos(pitch/2) * math.cos(yaw/2) + math.sin(roll/2) * math.sin(pitch/2) * math.sin(yaw/2)
+
+        return Quaternion(x=qx, y=qy, z=qz, w=qw)
+
+
+
+    def publish_plot(self):
+
+        plt.figure()
+        plt.plot(0,0,'go',markersize=10,label="Start")
+
+
+        plt.plot(np.array(self.x_odom),np.array(self.y_odom),'b-',linewidth=3,label="Odometry")
+        plt.plot(np.array(self.x_kf_odom),np.array(self.y_kf_odom),'r-',linewidth=3,label="KF-Odometry")
+
+        plt.grid(True)
+        plt.axis('equal')
+        plt.xlabel("X (cm)")
+        plt.ylabel("Y (cm)")
+        plt.title("Trajectory: Odometry vs KF-Odometry")
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig("trajectory_compare.png",dpi=200)
+        plt.close()
+
+
 
         
 
 
 def main(args=None):
+                
     rclpy.init(args=args)
     node = OdomNode()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.publish_plot()
+        node.publish_residual_plot()
+        node.destroy_node()
+        rclpy.shutdown()
     
 
-
-
-if __name__ == "main":
+if __name__ == "__main__":
     main()

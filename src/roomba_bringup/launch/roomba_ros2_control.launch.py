@@ -144,8 +144,8 @@ def generate_launch_description():
                
         Node(
             package='roomba_bringup',
-            executable='odometry_node',
-            name='odometry_node',
+            executable='kf_odom_node',
+            name='kf_odom_node',
             output='screen',
         ),
 

@@ -21,8 +21,8 @@ class OdometryNode(Node):
         super().__init__('odometry_node')
         
         # Publishers
-        self.odom_publisher = self.create_publisher(Odometry, '/odom', 10)
-        self.nav_odom_publisher = self.create_publisher(NavOdom, '/nav_odom', 10)
+        # self.odom_publisher = self.create_publisher(Odometry, '/odom', 10)
+        self.nav_odom_publisher = self.create_publisher(NavOdom, '/odom', 10)
         
         # Subscribers
         self.sensor_subscription = self.create_subscription(
@@ -90,11 +90,11 @@ class OdometryNode(Node):
         
     def publish_odometry(self):
         # Publish custom odometry message
-        odom_msg = Odometry()
-        odom_msg.x = self.x
-        odom_msg.y = self.y
-        odom_msg.theta = self.theta
-        self.odom_publisher.publish(odom_msg)
+        # odom_msg = Odometry()
+        # odom_msg.x = self.x
+        # odom_msg.y = self.y
+        # odom_msg.theta = self.theta
+        # self.odom_publisher.publish(odom_msg)
         
         # Publish standard ROS nav_msgs/Odometry
         nav_odom = NavOdom()
