@@ -192,7 +192,7 @@ class OdomNode(Node):
         odom = Odometry()
         odom.header.stamp = self.get_clock().now().to_msg()
         odom.header.frame_id = "odom"
-        odom.child.frame_id = "base_link"
+        odom.child_frame_id = "base_link"
 
         odom.pose.pose.position.x = self.xk[0]
         odom.pose.pose.position.y = self.xk[1]
